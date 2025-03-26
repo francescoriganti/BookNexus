@@ -254,6 +254,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = getTodayDateString();
       const resetGame = req.query.reset === 'true';
       const bookTitle = req.query.book as string | undefined;
+      const isAnonymous = req.query.anonymous === 'true';
+      
+      // Se la richiesta è anonima, restituisci sempre un gioco nuovo ma
+      // non salvarlo nel database, solo per la visualizzazione
+      if (isAnonymous) {
+        console.log("Richiesta anonima ricevuta, restituendo un nuovo stato di gioco");
+        // Crea un nuovo stato di gioco senza salvarlo
+        const freshGameState = await activeStorage.createGameState(today);
+        
+        // Non chiamare updateGameState, restituisci solo il nuovo stato
+        return res.json(freshGameState);
+      }
       
       // Handle reset with specific book title
       if (resetGame && bookTitle) {
@@ -313,13 +325,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submit a guess
   app.post("/api/game/guess", async (req: Request, res: Response) => {
     const guessSchema = z.object({
-      bookTitle: z.string().min(1)
+      bookTitle: z.string().min(1),
+      anonymous: z.boolean().optional()
     });
     
     try {
-      const { bookTitle } = guessSchema.parse(req.body);
+      const { bookTitle, anonymous } = guessSchema.parse(req.body);
       const today = getTodayDateString();
       
+      // Controlla se è una sessione anonima
+      if (anonymous) {
+        console.log("Tentativo anonimo ricevuto, creando stato di gioco temporaneo");
+        
+        // Per la modalità anonima, creiamo uno stato temporaneo senza salvarlo
+        const tempGameState = await activeStorage.createGameState(today);
+        const guessResult = await checkGuess(bookTitle, today);
+        
+        if ('error' in guessResult) {
+          return res.status(404).json({ error: guessResult.error });
+        }
+        
+        // Aggiorniamo lo stato temporaneo
+        tempGameState.remainingAttempts--;
+        tempGameState.guesses.push(guessResult);
+        
+        // Elaboriamo gli attributi rivelati
+        if (tempGameState.revealedAttributes && guessResult) {
+          tempGameState.revealedAttributes.forEach((attr: any, index: number) => {
+            let matchStatus: "correct" | "partial" | "incorrect" | null = null;
+            
+            if (attr.name === "Publication Year") {
+              matchStatus = guessResult.attributes.publicationYear.status;
+            } else if (attr.name === "Genre") {
+              matchStatus = guessResult.attributes.genre.status;
+            } else if (attr.name === "Author's Country") {
+              matchStatus = guessResult.attributes.authorsCountry.status;
+            } else if (attr.name === "Pages") {
+              matchStatus = guessResult.attributes.pages.status;
+            } else if (attr.name === "Author") {
+              matchStatus = guessResult.attributes.author.status;
+            } else if (attr.name === "Original Language") {
+              matchStatus = guessResult.attributes.originalLanguage.status;
+            } else if (attr.name === "Historical Period") {
+              matchStatus = guessResult.attributes.historicalPeriod.status;
+            }
+            
+            if (matchStatus === "correct") {
+              tempGameState.revealedAttributes[index].revealed = true;
+            }
+          });
+        }
+        
+        // Verifichiamo se il gioco è finito
+        if (guessResult.isCorrect) {
+          tempGameState.gameStatus = "won";
+          
+          // Se il giocatore ha vinto, restituisci anche il libro giornaliero
+          const dailyBook = await activeStorage.getBook(tempGameState.dailyBookId);
+          
+          return res.json({
+            guessResult,
+            gameState: {
+              ...tempGameState,
+              dailyBookId: undefined
+            },
+            dailyBook
+          });
+        } else if (tempGameState.remainingAttempts <= 0) {
+          tempGameState.gameStatus = "lost";
+          
+          // Se il giocatore ha perso, restituisci anche il libro giornaliero
+          const dailyBook = await activeStorage.getBook(tempGameState.dailyBookId);
+          
+          return res.json({
+            guessResult,
+            gameState: {
+              ...tempGameState,
+              dailyBookId: undefined
+            },
+            dailyBook
+          });
+        }
+        
+        // Risposta per sessione anonima ancora in corso
+        const { dailyBookId, ...safeTempGameState } = JSON.parse(JSON.stringify(tempGameState));
+        return res.json({ guessResult, gameState: safeTempGameState });
+      }
+      
+      // Logica standard per utenti non anonimi
       // Get or create game state
       let gameState = await activeStorage.getGameState(today);
       if (!gameState) {
@@ -422,6 +515,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get stats
   app.get("/api/stats", async (req: Request, res: Response) => {
+    // Controlla se è una richiesta anonima
+    const isAnonymous = req.query.anonymous === 'true';
+    
+    if (isAnonymous) {
+      console.log("Richiesta statistiche anonima ricevuta, restituendo statistiche default");
+      
+      // Per la modalità anonima, restituisci statistiche vuote
+      const emptyStats = {
+        id: 0,
+        userId: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+        guessDistribution: [0, 0, 0, 0, 0, 0, 0, 0],
+        lastPlayed: null
+      };
+      
+      return res.json(emptyStats);
+    }
+    
     // For simplicity, we'll use a fixed user ID
     const userId = 1;
     
@@ -450,11 +564,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stats/update", async (req: Request, res: Response) => {
     const statsSchema = z.object({
       won: z.boolean(),
-      attempts: z.number().int().min(1).max(8)
+      attempts: z.number().int().min(1).max(8),
+      anonymous: z.boolean().optional()
     });
     
     try {
-      const { won, attempts } = statsSchema.parse(req.body);
+      const { won, attempts, anonymous } = statsSchema.parse(req.body);
+      
+      // Se è una richiesta anonima, restituisci semplicemente delle statistiche vuote
+      if (anonymous) {
+        console.log("Aggiornamento statistiche in modalità anonima, ignorando");
+        
+        return res.json({
+          id: 0,
+          userId: 0,
+          gamesPlayed: 1, // Conta solo la partita corrente
+          gamesWon: won ? 1 : 0,
+          currentStreak: won ? 1 : 0,
+          maxStreak: won ? 1 : 0,
+          guessDistribution: won ? [0, 0, 0, 0, 0, 0, 0, 0].map((val, i) => i === attempts - 1 ? 1 : 0) : [0, 0, 0, 0, 0, 0, 0, 0],
+          lastPlayed: new Date().toISOString().split('T')[0]
+        });
+      }
+      
       const userId = 1; // Using fixed user ID for simplicity
       
       // Get or create stats
