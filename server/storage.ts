@@ -73,7 +73,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "United Kingdom",
         pages: 328,
         originalLanguage: "English",
-        historicalPeriod: "Post-WWII"
+        historicalPeriod: "Post-WWII",
+        imageUrl: "/book-covers/1984.jpg"
       },
       {
         title: "Pride and Prejudice",
@@ -83,7 +84,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "United Kingdom",
         pages: 432,
         originalLanguage: "English",
-        historicalPeriod: "Regency Era"
+        historicalPeriod: "Regency Era",
+        imageUrl: "/book-covers/pride-and-prejudice.jpg"
       },
       {
         title: "Emma",
@@ -93,7 +95,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "United Kingdom",
         pages: 474,
         originalLanguage: "English",
-        historicalPeriod: "Regency Era"
+        historicalPeriod: "Regency Era",
+        imageUrl: "/book-covers/emma.jpg"
       },
       {
         title: "One Hundred Years of Solitude",
@@ -103,7 +106,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "Colombia",
         pages: 417,
         originalLanguage: "Spanish",
-        historicalPeriod: "19th-20th Century"
+        historicalPeriod: "19th-20th Century",
+        imageUrl: "/book-covers/one-hundred-years-of-solitude.jpg"
       },
       {
         title: "Crime and Punishment",
@@ -175,7 +179,12 @@ export class MemStorage implements IStorage {
   
   async addBook(insertBook: InsertBook): Promise<Book> {
     const id = this.bookCurrentId++;
-    const book: Book = { ...insertBook, id };
+    // Assicuriamoci che imageUrl sia sempre definito
+    const book: Book = { 
+      ...insertBook, 
+      id,
+      imageUrl: insertBook.imageUrl || null 
+    };
     this.books.set(id, book);
     return book;
   }
