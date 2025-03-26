@@ -32,29 +32,28 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
   }
 
   // Ottieni lo stato corrente del gioco dal localStorage, se disponibile
-  const getLatestGuess = () => {
+  const getAllGuesses = () => {
     try {
       const gameStateRaw = localStorage.getItem('gameState');
       if (gameStateRaw) {
         const gameState = JSON.parse(gameStateRaw);
         if (gameState.guesses && gameState.guesses.length > 0) {
-          return gameState.guesses[gameState.guesses.length - 1];
+          return gameState.guesses;
         }
       }
     } catch (e) {
       console.error("Errore nell'accesso al localStorage:", e);
     }
-    return null;
+    return [];
   };
 
-  const latestGuess = getLatestGuess();
+  const allGuesses = getAllGuesses();
   
-  // Funzione per ottenere lo stato dell'attributo
+  // Funzione per ottenere lo stato dell'attributo, controllando tutti i tentativi precedenti
   const getAttributeStatus = (attrName: string): "correct" | "partial" | "incorrect" | null => {
-    if (!latestGuess || !latestGuess.attributes) return null;
+    if (!allGuesses || allGuesses.length === 0) return null;
     
-    const attributeKey = attrName.toLowerCase().replace(/['\s]/g, '') as keyof typeof latestGuess.attributes;
-    const mappings: Record<string, keyof typeof latestGuess.attributes> = {
+    const mappings: Record<string, string> = {
       "Publication Year": "publicationYear",
       "Genre": "genre",
       "Author's Country": "authorsCountry",
@@ -65,7 +64,30 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
     };
     
     const key = mappings[attrName];
-    if (key && latestGuess.attributes[key]) {
+    if (!key) return null;
+    
+    console.log(`Controllo stato attributo ${attrName} (${key}) in tutti i tentativi:`, allGuesses);
+    
+    // Controlla tutti i tentativi e restituisci "correct" se è stato indovinato in qualsiasi tentativo
+    for (const guess of allGuesses) {
+      if (guess.attributes && guess.attributes[key] && guess.attributes[key].status === "correct") {
+        console.log(`Attributo ${attrName} indovinato correttamente in un tentativo precedente!`);
+        return "correct";
+      }
+    }
+    
+    // Se almeno un tentativo ha "partial", restituisci "partial"
+    for (const guess of allGuesses) {
+      if (guess.attributes && guess.attributes[key] && guess.attributes[key].status === "partial") {
+        console.log(`Attributo ${attrName} parzialmente indovinato in un tentativo precedente!`);
+        return "partial";
+      }
+    }
+    
+    // Altrimenti usa l'ultimo tentativo
+    const latestGuess = allGuesses[allGuesses.length - 1];
+    if (latestGuess && latestGuess.attributes && latestGuess.attributes[key]) {
+      console.log(`Attributo ${attrName}: stato dall'ultimo tentativo = ${latestGuess.attributes[key].status}`);
       return latestGuess.attributes[key].status;
     }
     
@@ -82,10 +104,10 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
         const status = isRevealed ? getAttributeStatus(attr.name) : null;
         const statusClass = isRevealed && status 
           ? status === "correct" 
-            ? "attribute-correct" 
+            ? "bg-green-50 border-green-300" 
             : status === "partial" 
-              ? "attribute-partial" 
-              : "attribute-incorrect"
+              ? "bg-amber-50 border-amber-300" 
+              : "bg-blue-50 border-blue-300"
           : "";
         
         return (
