@@ -44,6 +44,17 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const today = new Date();
   const gameNumber = Math.floor((today.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
   
+  // Check localStorage for a flag indicating if stats have been updated today
+  useEffect(() => {
+    const todayDateString = getTodayDateString();
+    const statsUpdatedToday = localStorage.getItem(`statsUpdated_${todayDateString}`);
+    
+    if (statsUpdatedToday === 'true') {
+      setHasUpdatedStats(true);
+      console.log("Stats already updated today according to localStorage");
+    }
+  }, []);
+  
   // Fetch game state
   const { 
     data: gameState, 
@@ -129,7 +140,13 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (data.dailyBook) {
         setDailyBook(data.dailyBook);
         
-        // If game is over, show the result modal
+        // If game is over and stats haven't been updated yet
+        if (!hasUpdatedStats && gameState && (gameState.gameStatus === "won" || gameState.gameStatus === "lost")) {
+          // Update stats only once
+          updateStats();
+        }
+        
+        // Show the result modal
         openGameResultModal();
       }
     },
@@ -147,10 +164,12 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     mutate: updateStatsMutation,
   } = useMutation({
     mutationFn: async () => {
-      if (!gameState || gameState.gameStatus === "active") return;
+      if (!gameState || gameState.gameStatus === "active" || hasUpdatedStats) return;
       
       const won = gameState.gameStatus === "won";
       const attempts = 8 - gameState.remainingAttempts;
+      
+      console.log("Updating stats for the first time");
       
       const response = await apiRequest('POST', '/api/stats/update', { 
         won, 
@@ -162,6 +181,7 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (data) {
         queryClient.setQueryData(['/api/stats'], data);
         setHasUpdatedStats(true);
+        console.log("Stats updated successfully, hasUpdatedStats set to true");
       }
     }
   });
@@ -208,9 +228,11 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
   
-  // Update stats when game is over
+  // Update stats when game is over - only once per game
   const updateStats = async () => {
-    updateStatsMutation();
+    if (!hasUpdatedStats) {
+      updateStatsMutation();
+    }
   };
   
   // Value for the context

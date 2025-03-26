@@ -28,6 +28,7 @@ export default function GameResultModal({
   gameNumber
 }: GameResultModalProps) {
   const { toast } = useToast();
+  // Importante: Non aggiornare le statistiche qui per evitare loop infiniti
   
   const isGameOver = gameStatus === "won" || gameStatus === "lost";
   
