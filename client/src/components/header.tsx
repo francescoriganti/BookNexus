@@ -1,7 +1,8 @@
-import { BookOpen, Clock } from "lucide-react";
+import { BookOpen, Clock, Ghost } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/hooks/use-game";
 import CountdownTimer from "@/components/countdown-timer";
+import { useIncognitoDetection } from "@/hooks/use-incognito";
 
 export default function Header() {
   const { openHowToPlayModal, openStatsModal } = useGame();
