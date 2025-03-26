@@ -12,7 +12,6 @@ import { getTodayDateString } from "@/lib/utils";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { type GameState, type Book, type GameGuess, type GameStats } from "@shared/schema";
-import { useIncognitoDetection } from "./use-incognito";
 
 // Context types
 type GameContextType = {
@@ -41,13 +40,6 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [dailyBook, setDailyBook] = useState<Book | null>(null);
   const [hasUpdatedStats, setHasUpdatedStats] = useState(false);
   const [hasShownResultModal, setHasShownResultModal] = useState(false);
-  const { isIncognito, isChecking } = useIncognitoDetection();
-  
-  useEffect(() => {
-    if (isIncognito) {
-      console.log("Modalità incognito/privata rilevata!");
-    }
-  }, [isIncognito]);
   
   // Calculate a "game number" based on days since launch
   const launchDate = new Date('2023-01-01'); // Arbitrary launch date
@@ -62,12 +54,7 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   } = useQuery<GameState>({
     queryKey: ['/api/game'],
     queryFn: async () => {
-      // Se siamo in modalità incognito, passa il parametro anonymous=true
-      const endpoint = isIncognito 
-        ? '/api/game?anonymous=true' 
-        : '/api/game';
-      
-      const response = await fetch(endpoint);
+      const response = await fetch('/api/game');
       if (!response.ok) {
         throw new Error('Failed to fetch game state');
       }
@@ -75,7 +62,6 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     },
     refetchOnWindowFocus: false,
     staleTime: 60000, // 1 minute
-    enabled: !isChecking, // Abilita la query solo dopo aver controllato se siamo in incognito
   });
   
   // Check localStorage for persisted game data
@@ -115,12 +101,7 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   } = useQuery<GameStats & { guessDistribution: number[] }>({
     queryKey: ['/api/stats'],
     queryFn: async () => {
-      // Se siamo in modalità incognito, passa il parametro anonymous=true
-      const endpoint = isIncognito 
-        ? '/api/stats?anonymous=true' 
-        : '/api/stats';
-      
-      const response = await fetch(endpoint);
+      const response = await fetch('/api/stats');
       if (!response.ok) {
         throw new Error('Failed to fetch stats');
       }
@@ -128,7 +109,6 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     },
     refetchOnWindowFocus: false,
     staleTime: 3600000, // 1 hour
-    enabled: !isChecking, // Abilita la query solo dopo aver controllato se siamo in incognito
   });
   
   // Submit guess mutation
@@ -137,17 +117,8 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     isPending
   } = useMutation({
     mutationFn: async (bookTitle: string) => {
-      // Se siamo in modalità incognito, passa il flag anonymous
-      if (isIncognito) {
-        const response = await apiRequest('POST', '/api/game/guess', { 
-          bookTitle,
-          anonymous: true 
-        });
-        return response.json();
-      } else {
-        const response = await apiRequest('POST', '/api/game/guess', { bookTitle });
-        return response.json();
-      }
+      const response = await apiRequest('POST', '/api/game/guess', { bookTitle });
+      return response.json();
     },
     onSuccess: (data) => {
       if (data.error) {
@@ -275,21 +246,11 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const won = gameState.gameStatus === "won";
       const attempts = 8 - gameState.remainingAttempts;
       
-      // Se siamo in modalità incognito, passa il flag anonymous
-      if (isIncognito) {
-        const response = await apiRequest('POST', '/api/stats/update', { 
-          won, 
-          attempts,
-          anonymous: true
-        });
-        return response.json();
-      } else {
-        const response = await apiRequest('POST', '/api/stats/update', { 
-          won, 
-          attempts 
-        });
-        return response.json();
-      }
+      const response = await apiRequest('POST', '/api/stats/update', { 
+        won, 
+        attempts 
+      });
+      return response.json();
     },
     onSuccess: (data) => {
       if (data) {
