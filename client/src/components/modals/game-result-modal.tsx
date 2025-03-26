@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar, Share2, Copy } from "lucide-react";
@@ -28,10 +29,27 @@ export default function GameResultModal({
   gameNumber
 }: GameResultModalProps) {
   const { toast } = useToast();
-  // Importante: Non aggiornare le statistiche qui per evitare loop infiniti
+  const [open, setOpen] = useState(false);
   
-  // Usa useEffect con array di dipendenze vuoto per garantire che il codice venga eseguito solo una volta
-  // Questo aiuta a prevenire aggiornamenti ripetuti che causano il Maximum update depth exceeded
+  // Effetto per aprire il modale quando cambia lo stato del gioco o quando viene cliccato il trigger
+  useEffect(() => {
+    // Aggiorniamo lo stato del modale in base allo stato del gioco
+    if (gameStatus === "won" || gameStatus === "lost") {
+      setOpen(true);
+    }
+    
+    // Aggiungiamo un listener per il click sul trigger
+    const handleTriggerClick = () => {
+      setOpen(true);
+    };
+    
+    const triggerEl = document.getElementById("gameResultModal");
+    triggerEl?.addEventListener("click", handleTriggerClick);
+    
+    return () => {
+      triggerEl?.removeEventListener("click", handleTriggerClick);
+    };
+  }, [gameStatus]);
   
   const isGameOver = gameStatus === "won" || gameStatus === "lost";
   
@@ -71,8 +89,18 @@ export default function GameResultModal({
     window.open(url, "_blank");
   };
 
+  // Funzione per gestire la chiusura del modale
+  const handleClose = () => {
+    // Aggiorna le statistiche quando l'utente chiude il modale
+    const event = new CustomEvent('updateGameStats');
+    window.dispatchEvent(event);
+    
+    // Chiudi il modale
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger id="gameResultModal" className="hidden">
         Open Game Result
       </DialogTrigger>
@@ -131,14 +159,11 @@ export default function GameResultModal({
         </div>
         
         <DialogFooter className="sm:justify-end">
-          <Button type="button" variant="outline" onClick={() => {
-            // Quando l'utente chiude il modale, possiamo aggiornare le statistiche in modo sicuro
-            // Questo aggiornamento avviene solo in risposta all'interazione dell'utente
-            const event = new CustomEvent('updateGameStats');
-            window.dispatchEvent(event);
-          }}>
-            Close
-          </Button>
+          <DialogClose asChild>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Close
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
