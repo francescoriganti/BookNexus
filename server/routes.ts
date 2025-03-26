@@ -133,29 +133,9 @@ class FallbackStorage implements IStorage {
 // Determine which storage to use
 let activeStorage: IStorage;
 
-// Check if we have PostgreSQL database environment variables
-const hasPostgresEnv = process.env.DATABASE_URL || 
-                     (process.env.PGHOST && process.env.PGPORT && 
-                      process.env.PGUSER && process.env.PGPASSWORD && 
-                      process.env.PGDATABASE);
-
-try {
-  if (hasPostgresEnv) {
-    // Use PostgreSQL with fallback to in-memory
-    log('Using PostgreSQL storage with fallback to in-memory storage');
-    activeStorage = new FallbackStorage(postgresStorage, storage);
-  } else if (process.env.SUPABASE_KEY) {
-    // Use Supabase with fallback to in-memory
-    log('Using Supabase storage with fallback to in-memory storage');
-    activeStorage = new FallbackStorage(supabaseStorage, storage);
-  } else {
-    log('No database configuration found. Using in-memory storage.');
-    activeStorage = storage;
-  }
-} catch (error) {
-  log(`Error initializing database storage: ${error}. Using in-memory storage.`);
-  activeStorage = storage;
-}
+// For now, use in-memory storage to get the app working reliably
+log('Using in-memory storage for stability.');
+activeStorage = storage;
 
 // Helper for date formatting
 function getTodayDateString(): string {
