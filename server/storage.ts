@@ -181,10 +181,16 @@ export class MemStorage implements IStorage {
   
   // Game methods
   async getDailyBook(date: string): Promise<Book> {
-    // Use date string to deterministically select a book for the day
+    // Use Pride and Prejudice as today's book per user request
     const books = Array.from(this.books.values());
+    const prideAndPrejudice = books.find(book => book.title === "Pride and Prejudice");
+    
+    if (prideAndPrejudice) {
+      return prideAndPrejudice;
+    }
+    
+    // Fallback to the original logic
     const dateObj = new Date(date);
-    // Generate a deterministic index based on the date
     const dateNum = dateObj.getFullYear() * 10000 + (dateObj.getMonth() + 1) * 100 + dateObj.getDate();
     const index = dateNum % books.length;
     

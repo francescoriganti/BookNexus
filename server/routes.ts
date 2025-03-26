@@ -250,10 +250,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get today's game state
   app.get("/api/game", async (req: Request, res: Response) => {
     const today = getTodayDateString();
+    const resetGame = req.query.reset === 'true';
     
     let gameState = await activeStorage.getGameState(today);
     
-    if (!gameState) {
+    if (!gameState || resetGame) {
       // Create new game state for today
       gameState = await activeStorage.createGameState(today);
     }
