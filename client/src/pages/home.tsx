@@ -16,7 +16,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-slate-50 text-slate-800 font-sans min-h-screen">
+    <div className="bg-slate-50 text-slate-800 font-sans min-h-screen overflow-hidden relative">
       <GameProvider>
         <Header />
         <GameBoard />

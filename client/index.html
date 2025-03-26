@@ -16,6 +16,13 @@
       --font-mono: 'Roboto Mono', monospace;
     }
     
+    html, body {
+      overflow-x: hidden;
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+    }
+    
     .font-serif {
       font-family: var(--font-serif);
     }
@@ -35,6 +42,13 @@
     
     .attribute-card.transform.rotate-y-180 {
       transform: rotateY(180deg);
+    }
+    
+    /* Fix for horizontal scroll issues */
+    #root {
+      position: relative;
+      overflow-x: hidden;
+      width: 100%;
     }
   </style>
 </head>
