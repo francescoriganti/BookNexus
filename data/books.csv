@@ -1,9 +1,51 @@
 id,title,author,publication_year,genre,authors_country,pages,original_language,historical_period
-1,"To Kill a Mockingbird","Harper Lee",1960,"Fiction","United States",281,"English","Civil Rights Movement"
-2,"1984","George Orwell",1949,"Dystopian Fiction","United Kingdom",328,"English","Post-World War II"
-3,"The Great Gatsby","F. Scott Fitzgerald",1925,"Fiction","United States",180,"English","Jazz Age"
-4,"Pride and Prejudice","Jane Austen",1813,"Romance","United Kingdom",432,"English","Regency Era"
-5,"One Hundred Years of Solitude","Gabriel García Márquez",1967,"Magical Realism","Colombia",417,"Spanish","Post-Colonial Latin America"
-6,"Crime and Punishment","Fyodor Dostoevsky",1866,"Psychological Fiction","Russia",671,"Russian","Imperial Russia"
-7,"Moby-Dick","Herman Melville",1851,"Adventure Fiction","United States",585,"English","American Renaissance"
-8,"Emma","Jane Austen",1815,"Romance","United Kingdom",474,"English","Regency Era"
+1,The Bible,Various,-500,Religious,Various,1200,"Hebrew, Greek",Ancient Times
+2,Quotations from Chairman Mao Tse-Tung,Mao Zedong,1964,Political Philosophy,China,427,Chinese,Cultural Revolution
+3,The Quran,Various,632,Religious,Various,604,Arabic,Ancient Times
+4,Don Quixote,Miguel de Cervantes,1605,Adventure,Spain,863,Spanish,Spanish Golden Age
+5,A Tale of Two Cities,Charles Dickens,1859,Historical Fiction,United Kingdom,489,English,French Revolution
+6,The Lord of the Rings,J.R.R. Tolkien,1954,Fantasy,United Kingdom,1216,English,Post-World War II
+7,Harry Potter and the Philosopher's Stone,J.K. Rowling,1997,Fantasy,United Kingdom,223,English,Contemporary
+8,The Hobbit,J.R.R. Tolkien,1937,Fantasy,United Kingdom,310,English,Interwar Period
+9,And Then There Were None,Agatha Christie,1939,Mystery,United Kingdom,272,English,Interwar Period
+10,Dream of the Red Chamber,Cao Xueqin,1791,Romance,China,2500,Chinese,Qing Dynasty
+11,The Little Prince,Antoine de Saint-Exupéry,1943,Children's,France,96,French,World War II
+12,The Da Vinci Code,Dan Brown,2003,Thriller,United States,689,English,Contemporary
+13,The Alchemist,Paulo Coelho,1988,Adventure,Brazil,208,Portuguese,Contemporary
+14,The Catcher in the Rye,J.D. Salinger,1951,Fiction,United States,277,English,Post-World War II
+15,The Diary of a Young Girl,Anne Frank,1947,Autobiography,Germany/Netherlands,283,Dutch,World War II
+16,The Book Thief,Markus Zusak,2005,Historical Fiction,Australia,552,English,World War II
+17,Anne of Green Gables,L.M. Montgomery,1908,Fiction,Canada,320,English,Edwardian Era
+18,Lolita,Vladimir Nabokov,1955,Fiction,Russia/USA,336,English,Cold War
+19,"The Lion, the Witch and the Wardrobe",C.S. Lewis,1950,Fantasy,United Kingdom,208,English,Post-World War II
+20,Charlotte's Web,E.B. White,1952,Children's,United States,192,English,Post-World War II
+21,Heidi,Johanna Spyri,1881,Children's,Switzerland,288,German,19th Century Europe
+22,The Girl with the Dragon Tattoo,Stieg Larsson,2005,Thriller,Sweden,465,Swedish,Contemporary
+23,Angels & Demons,Dan Brown,2000,Thriller,United States,616,English,Contemporary
+24,Twilight,Stephenie Meyer,2005,Fantasy,United States,498,English,Contemporary
+25,New Moon,Stephenie Meyer,2006,Fantasy,United States,563,English,Contemporary
+26,Eclipse,Stephenie Meyer,2007,Fantasy,United States,629,English,Contemporary
+27,Breaking Dawn,Stephenie Meyer,2008,Fantasy,United States,756,English,Contemporary
+28,Gone with the Wind,Margaret Mitchell,1936,Historical Fiction,United States,1037,English,American Civil War
+29,Think and Grow Rich,Napoleon Hill,1937,Self-help,United States,238,English,Great Depression
+30,The Purpose Driven Life,Rick Warren,2002,Christian,United States,334,English,Contemporary
+31,Who Moved My Cheese?,Spencer Johnson,1998,Self-help,United States,96,English,Contemporary
+32,The Secret,Rhonda Byrne,2006,Self-help,Australia,198,English,Contemporary
+33,To Kill a Mockingbird,Harper Lee,1960,Fiction,United States,281,English,Civil Rights Movement
+34,1984,George Orwell,1949,Dystopian Fiction,United Kingdom,328,English,Post-World War II
+35,The Great Gatsby,F. Scott Fitzgerald,1925,Fiction,United States,180,English,Jazz Age
+36,Pride and Prejudice,Jane Austen,1813,Romance,United Kingdom,432,English,Regency Era
+37,One Hundred Years of Solitude,Gabriel García Márquez,1967,Magical Realism,Colombia,417,Spanish,Post-Colonial Latin America
+38,Crime and Punishment,Fyodor Dostoevsky,1866,Psychological Fiction,Russia,671,Russian,Imperial Russia
+39,Moby-Dick,Herman Melville,1851,Adventure Fiction,United States,585,English,American Renaissance
+40,Emma,Jane Austen,1815,Romance,United Kingdom,474,English,Regency Era
+41,The Kite Runner,Khaled Hosseini,2003,Historical Fiction,Afghanistan/USA,371,English,Contemporary
+42,The Hunger Games,Suzanne Collins,2008,Dystopian Fiction,United States,374,English,Contemporary
+43,Catching Fire,Suzanne Collins,2009,Dystopian Fiction,United States,391,English,Contemporary
+44,Mockingjay,Suzanne Collins,2010,Dystopian Fiction,United States,390,English,Contemporary
+45,Les Misérables,Victor Hugo,1862,Historical Fiction,France,1463,French,French Revolution
+46,The Count of Monte Cristo,Alexandre Dumas,1844,Adventure,France,1276,French,19th Century France
+47,The Brothers Karamazov,Fyodor Dostoevsky,1880,Philosophical Fiction,Russia,796,Russian,Imperial Russia
+48,Brave New World,Aldous Huxley,1932,Dystopian Fiction,United Kingdom,311,English,Interwar Period
+49,Frankenstein,Mary Shelley,1818,Gothic Fiction,United Kingdom,280,English,Romantic Era
+50,Dracula,Bram Stoker,1897,Gothic Fiction,Ireland,418,English,Victorian Era
