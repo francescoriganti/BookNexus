@@ -1,8 +1,12 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { supabaseStorage } from "./supabase-storage";
 import { z } from "zod";
 import { insertBookSchema } from "@shared/schema";
+
+// Use Supabase storage instead of in-memory storage if SUPABASE_KEY is set
+const activeStorage = process.env.SUPABASE_KEY ? supabaseStorage : storage;
 
 // Helper for date formatting
 function getTodayDateString(): string {
@@ -12,8 +16,8 @@ function getTodayDateString(): string {
 
 // Helper for checking guess correctness and providing feedback
 async function checkGuess(bookTitle: string, date: string) {
-  const dailyBook = await storage.getDailyBook(date);
-  const guessedBook = await storage.getBookByTitle(bookTitle);
+  const dailyBook = await activeStorage.getDailyBook(date);
+  const guessedBook = await activeStorage.getBookByTitle(bookTitle);
   
   if (!guessedBook) {
     return { error: "Book not found in database" };
