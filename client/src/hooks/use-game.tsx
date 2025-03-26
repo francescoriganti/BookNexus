@@ -82,7 +82,23 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
         return;
       }
       
-      queryClient.setQueryData(['/api/game'], data.gameState);
+      // Log game state data for debugging
+      console.log("Game state updated:", data.gameState);
+      
+      // Ensure we handle revealedAttributes properly
+      if (data.gameState && data.gameState.revealedAttributes) {
+        // Make sure revealedAttributes is properly processed
+        queryClient.setQueryData(['/api/game'], {
+          ...data.gameState,
+          revealedAttributes: data.gameState.revealedAttributes
+        });
+        
+        // Check what we've revealed so far
+        const revealedCount = data.gameState.revealedAttributes.filter((attr: any) => attr.revealed).length;
+        console.log(`Revealed ${revealedCount} attributes so far`);
+      } else {
+        queryClient.setQueryData(['/api/game'], data.gameState);
+      }
       
       if (data.dailyBook) {
         setDailyBook(data.dailyBook);

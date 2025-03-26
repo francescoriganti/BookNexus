@@ -18,6 +18,9 @@ const attributeIcons: Record<string, React.ReactNode> = {
 };
 
 export default function AttributeGrid({ attributes }: AttributeGridProps) {
+  // For debugging - remove in production
+  console.log("Rendering attribute grid with:", attributes);
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {attributes.map((attr, index) => (
@@ -26,13 +29,16 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
           className={cn(
             "attribute-card bg-white border border-slate-200 rounded-md p-3 text-center shadow-sm flex flex-col items-center transition-all duration-300",
             attr.revealed 
-              ? "transform-none opacity-100" 
-              : "transform rotate-y-180 opacity-70"
+              ? "bg-white border-blue-200" 
+              : "bg-gray-50"
           )}
         >
           {attributeIcons[attr.name] || <BookType className="h-5 w-5 text-slate-400" />}
           <p className="text-xs text-slate-500 mb-1">{attr.name}</p>
-          <p className="font-mono text-sm font-medium">
+          <p className={cn(
+            "font-mono text-sm font-medium",
+            attr.revealed ? "text-blue-600" : "text-gray-400"
+          )}>
             {attr.revealed ? attr.value : attr.type === "number" ? "???" : "????"}
           </p>
         </div>
