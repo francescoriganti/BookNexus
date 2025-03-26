@@ -1,0 +1,24 @@
+<svg width="210" height="297" viewBox="0 0 210 297" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background color -->
+  <rect width="210" height="297" fill="#26A69A"/>
+  
+  <!-- Book spine shadow -->
+  <rect x="0" y="0" width="20" height="297" fill="#00897B"/>
+  
+  <!-- Decorative frame -->
+  <rect x="30" y="30" width="150" height="200" rx="5" fill="#E0F2F1"/>
+  <rect x="40" y="40" width="130" height="180" rx="5" stroke="#004D40" stroke-width="2" fill="none"/>
+  
+  <!-- Silhouette of a woman -->
+  <path d="M105 80 C90 80, 90 120, 105 120 C120 120, 120 80, 105 80Z" fill="#00897B"/> <!-- Head -->
+  <path d="M90 120 L120 120 L130 180 L80 180 Z" fill="#00897B"/> <!-- Dress -->
+  
+  <!-- Title area -->
+  <rect x="40" y="200" width="130" height="70" rx="5" fill="#FFFFFF"/>
+  
+  <!-- Title text -->
+  <text x="105" y="235" font-family="serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#00695C">Emma</text>
+  
+  <!-- Author name -->
+  <text x="105" y="255" font-family="serif" font-size="14" text-anchor="middle" fill="#00897B">Jane Austen</text>
+</svg>

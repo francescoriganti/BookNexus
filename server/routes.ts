@@ -174,6 +174,7 @@ async function checkGuess(bookTitle: string, date: string) {
   const guess: import('@shared/schema').GameGuess = {
     title: guessedBook.title,
     isCorrect,
+    imageUrl: guessedBook.imageUrl,
     attributes: {
       publicationYear: { 
         value: guessedBook.publicationYear, 

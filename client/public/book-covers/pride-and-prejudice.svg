@@ -1,0 +1,21 @@
+<svg width="210" height="297" viewBox="0 0 210 297" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background color -->
+  <rect width="210" height="297" fill="#8E24AA"/>
+  
+  <!-- Book spine shadow -->
+  <rect x="0" y="0" width="20" height="297" fill="#5E147A"/>
+  
+  <!-- Decorative pattern -->
+  <rect x="30" y="30" width="150" height="150" rx="5" fill="#E1BEE7"/>
+  <path d="M30 30 L180 180 M180 30 L30 180" stroke="#8E24AA" stroke-width="2"/>
+  
+  <!-- Title area -->
+  <rect x="40" y="190" width="130" height="80" rx="5" fill="#FFFFFF"/>
+  
+  <!-- Title text -->
+  <text x="105" y="220" font-family="serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#4A148C">Pride and</text>
+  <text x="105" y="240" font-family="serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#4A148C">Prejudice</text>
+  
+  <!-- Author name -->
+  <text x="105" y="260" font-family="serif" font-size="14" text-anchor="middle" fill="#8E24AA">Jane Austen</text>
+</svg>

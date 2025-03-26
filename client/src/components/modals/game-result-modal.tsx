@@ -119,6 +119,15 @@ export default function GameResultModal({
           </p>
           
           <div className="flex flex-col items-center mb-6 py-4 px-6 bg-slate-50 rounded-lg">
+            {dailyBook?.imageUrl && (
+              <div className="mb-4 w-24 h-36 overflow-hidden rounded-md shadow-sm">
+                <img 
+                  src={dailyBook.imageUrl} 
+                  alt={`Cover of ${dailyBook.title}`} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
             <span className="font-serif text-xl font-semibold mb-2">
               {dailyBook?.title || "—"}
             </span>
