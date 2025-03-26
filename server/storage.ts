@@ -6,6 +6,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
+import { loadBooksFromCsv } from "./csv-loader";
 
 export interface IStorage {
   // User methods
@@ -48,11 +49,30 @@ export class MemStorage implements IStorage {
     this.bookCurrentId = 1;
     this.statsCurrentId = 1;
     
-    // Initialize with sample books
-    this.initializeSampleBooks();
+    // Initialize with books from CSV
+    this.loadBooksFromCsv();
+  }
+  
+  private async loadBooksFromCsv() {
+    try {
+      const books = await loadBooksFromCsv();
+      // Aggiorna il valore di bookCurrentId in base al massimo ID trovato
+      let maxId = 0;
+      books.forEach(book => {
+        this.books.set(book.id, book);
+        maxId = Math.max(maxId, book.id);
+      });
+      this.bookCurrentId = maxId + 1;
+      console.log(`Caricati ${books.length} libri dal CSV. Prossimo ID: ${this.bookCurrentId}`);
+    } catch (error) {
+      console.error('Errore nel caricamento dei libri dal CSV:', error);
+      // In caso di errore, usa i libri predefiniti
+      this.initializeSampleBooks();
+    }
   }
   
   private initializeSampleBooks() {
+    console.warn('Utilizzo dei libri di esempio come fallback');
     const sampleBooks: InsertBook[] = [
       {
         title: "To Kill a Mockingbird",
@@ -88,39 +108,6 @@ export class MemStorage implements IStorage {
         imageUrl: "/book-covers/pride-and-prejudice.jpg"
       },
       {
-        title: "Emma",
-        author: "Jane Austen",
-        publicationYear: 1815,
-        genre: "Romance",
-        authorsCountry: "United Kingdom",
-        pages: 474,
-        originalLanguage: "English",
-        historicalPeriod: "Regency Era",
-        imageUrl: "/book-covers/emma.jpg"
-      },
-      {
-        title: "One Hundred Years of Solitude",
-        author: "Gabriel García Márquez",
-        publicationYear: 1967,
-        genre: "Magical Realism",
-        authorsCountry: "Colombia",
-        pages: 417,
-        originalLanguage: "Spanish",
-        historicalPeriod: "19th-20th Century",
-        imageUrl: "/book-covers/one-hundred-years-of-solitude.jpg"
-      },
-      {
-        title: "Crime and Punishment",
-        author: "Fyodor Dostoevsky",
-        publicationYear: 1866,
-        genre: "Psychological Fiction",
-        authorsCountry: "Russia",
-        pages: 545,
-        originalLanguage: "Russian",
-        historicalPeriod: "19th Century",
-        imageUrl: "/book-covers/crime-and-punishment.jpg"
-      },
-      {
         title: "The Great Gatsby",
         author: "F. Scott Fitzgerald",
         publicationYear: 1925,
@@ -130,17 +117,6 @@ export class MemStorage implements IStorage {
         originalLanguage: "English",
         historicalPeriod: "Roaring Twenties",
         imageUrl: "/book-covers/the-great-gatsby.jpg"
-      },
-      {
-        title: "Moby-Dick",
-        author: "Herman Melville",
-        publicationYear: 1851,
-        genre: "Adventure",
-        authorsCountry: "United States",
-        pages: 635,
-        originalLanguage: "English",
-        historicalPeriod: "19th Century",
-        imageUrl: "/book-covers/moby-dick.jpg"
       }
     ];
     
