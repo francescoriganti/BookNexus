@@ -6,12 +6,12 @@ export default function Header() {
   const { openHowToPlayModal, openStatsModal } = useGame();
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center">
-            <BookOpen className="text-blue-500 mr-2 h-6 w-6" />
-            <h1 className="font-serif text-2xl font-bold tracking-tight text-slate-900">
+            <BookOpen className="text-blue-600 mr-2 h-6 w-6" />
+            <h1 className="font-serif text-2xl font-bold tracking-tight text-slate-900 bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
               Bookaneer
             </h1>
           </div>

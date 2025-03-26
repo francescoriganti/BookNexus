@@ -76,7 +76,7 @@ export default function GameBoard() {
       </div>
 
       {/* Game Board */}
-      <Card className="mb-8">
+      <Card className="mb-8 game-container">
         <CardContent className="p-6">
           {/* Game Status */}
           <div className="text-center mb-6">

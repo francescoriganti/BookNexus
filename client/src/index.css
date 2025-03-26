@@ -8,6 +8,24 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-slate-100 text-foreground;
+  }
+
+  .game-container {
+    @apply bg-white rounded-lg shadow-md p-6;
+  }
+}
+
+@layer utilities {
+  .attribute-correct {
+    @apply bg-green-100 border-green-200;
+  }
+  
+  .attribute-partial {
+    @apply bg-yellow-50 border-yellow-200;
+  }
+  
+  .attribute-incorrect {
+    @apply bg-white border-gray-200;
   }
 }
