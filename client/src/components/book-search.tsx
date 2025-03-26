@@ -17,15 +17,28 @@ export default function BookSearch({ value, onChange, disabled = false }: BookSe
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   
+  // Teniamo traccia dell'ultima selezione per evitare di riaprire il menu
+  const [lastSelected, setLastSelected] = useState("");
+  
   // Handle search query
   useEffect(() => {
+    // Se il valore corrisponde all'ultima selezione, non riapriamo il menu
+    if (value === lastSelected) {
+      return;
+    }
+    
     const delaySearch = setTimeout(async () => {
       if (value.trim().length > 1) {
         setIsSearching(true);
         const searchResults = await searchBooks(value);
         setResults(searchResults);
         setIsSearching(false);
-        setShowResults(true);
+        
+        // Apriamo i risultati solo se l'utente sta ancora digitando,
+        // non quando ha appena selezionato un valore
+        if (value !== lastSelected) {
+          setShowResults(true);
+        }
       } else {
         setResults([]);
         setShowResults(false);
@@ -33,7 +46,7 @@ export default function BookSearch({ value, onChange, disabled = false }: BookSe
     }, 300);
     
     return () => clearTimeout(delaySearch);
-  }, [value, searchBooks]);
+  }, [value, searchBooks, lastSelected]);
   
   // Close results when clicking outside
   useEffect(() => {
@@ -55,6 +68,8 @@ export default function BookSearch({ value, onChange, disabled = false }: BookSe
   const handleSelectBook = (title: string) => {
     onChange(title);
     setShowResults(false);
+    // Aggiorniamo l'ultima selezione per evitare che il menu si riapra
+    setLastSelected(title);
   };
 
   return (
@@ -64,12 +79,18 @@ export default function BookSearch({ value, onChange, disabled = false }: BookSe
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          // Se l'utente sta scrivendo, resettiamo l'ultima selezione
+          if (e.target.value !== lastSelected) {
+            setLastSelected("");
+          }
+        }}
         className="w-full pl-10 pr-4 py-6"
         placeholder="Type a book title..."
         disabled={disabled}
         onFocus={() => {
-          if (value.trim().length > 1) {
+          if (value.trim().length > 1 && value !== lastSelected) {
             setShowResults(true);
           }
         }}
