@@ -1,13 +1,19 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import csvParser from 'csv-parser';
 import { Book, InsertBook } from '@shared/schema';
+
+// Ottieni il percorso corrente in ambiente ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Funzione per caricare i libri dal file CSV
 export async function loadBooksFromCsv(): Promise<Book[]> {
   return new Promise((resolve, reject) => {
     const books: Book[] = [];
     const csvFilePath = path.resolve(__dirname, '../data/books.csv');
+    console.log('Caricamento CSV da:', csvFilePath);
     
     fs.createReadStream(csvFilePath)
       .pipe(csvParser({
@@ -30,7 +36,7 @@ export async function loadBooksFromCsv(): Promise<Book[]> {
           pages: data.pages,
           originalLanguage: data.original_language,
           historicalPeriod: data.historical_period,
-          imageUrl: `/book-covers/${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`
+          imageUrl: `/book-covers/${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.svg`
         };
         books.push(book);
       })
