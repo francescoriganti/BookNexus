@@ -47,9 +47,20 @@ export default function GameResultModal({
         
         // Funzione per lanciare i confetti
         setTimeout(() => {
+          // Iniettiamo CSS per assicurarci che il canvas di confetti sia sempre sopra tutto
+          const style = document.createElement('style');
+          style.textContent = `
+            canvas.confetti-canvas {
+              position: fixed !important;
+              z-index: 10000 !important;
+              pointer-events: none !important;
+            }
+          `;
+          document.head.appendChild(style);
+          
           const duration = 3 * 1000;
           const animationEnd = Date.now() + duration;
-          const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+          const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
           
           function randomInRange(min: number, max: number) {
             return Math.random() * (max - min) + min;
@@ -142,12 +153,14 @@ export default function GameResultModal({
     setOpen(false);
   };
 
+
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger id="gameResultModal" className="hidden">
         Open Game Result
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" style={{ zIndex: 1000 }}>
         <DialogHeader>
           <DialogTitle className="text-center font-serif text-2xl">
             {gameStatus === "won" ? "You got it!" : "Better luck tomorrow!"}

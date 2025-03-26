@@ -105,6 +105,7 @@ export default function BookSearch({ value, onChange, disabled = false }: BookSe
           x: [0, -10, 10, -10, 10, -5, 5, -2, 2, 0],
           transition: { duration: 0.5 }
         } : {}}
+        style={{ position: 'relative', zIndex: 1 }}
       >
         <Input
           ref={inputRef}
