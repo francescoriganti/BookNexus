@@ -46,23 +46,65 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const today = new Date();
   const gameNumber = Math.floor((today.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Fetch game state
+  // Stato locale del gioco
+  const [localGameState, setLocalGameState] = useState<GameState | null>(null);
+  const [bookAttributes, setBookAttributes] = useState<any[]>([]);
+  
+  // Caricamento iniziale degli attributi del libro giornaliero
   const { 
-    data: gameState, 
+    data: dailyBookData, 
     isLoading,
-    refetch: refetchGameState
-  } = useQuery<GameState>({
-    queryKey: ['/api/game'],
+  } = useQuery({
+    queryKey: ['/api/daily-book'],
     queryFn: async () => {
-      const response = await fetch('/api/game');
+      const response = await fetch('/api/daily-book');
       if (!response.ok) {
-        throw new Error('Failed to fetch game state');
+        throw new Error('Failed to fetch daily book data');
       }
       return response.json();
     },
     refetchOnWindowFocus: false,
-    staleTime: 60000, // 1 minute
+    staleTime: Infinity, // Non ricaricare durante la sessione
   });
+  
+  // Inizializza o recupera lo stato del gioco dal localStorage
+  useEffect(() => {
+    if (!dailyBookData) return;
+    
+    const todayDateString = getTodayDateString();
+    const savedGameState = localStorage.getItem(`gameState_${todayDateString}`);
+    
+    if (savedGameState) {
+      // Se esiste già uno stato salvato, usalo
+      try {
+        const parsedState = JSON.parse(savedGameState);
+        setLocalGameState(parsedState);
+        console.log("Stato del gioco caricato da localStorage");
+      } catch (e) {
+        console.error("Errore nel parsing dello stato del gioco:", e);
+      }
+    } else {
+      // Altrimenti crea uno stato iniziale
+      const initialState: GameState = {
+        id: dailyBookData.id,
+        date: dailyBookData.date,
+        dailyBookId: 0, // Non conserviamo l'ID reale nel client
+        remainingAttempts: 8,
+        guesses: [],
+        revealedAttributes: dailyBookData.bookAttributes || [],
+        gameStatus: "active"
+      };
+      
+      setLocalGameState(initialState);
+      setBookAttributes(dailyBookData.bookAttributes || []);
+      
+      // Salva lo stato iniziale
+      localStorage.setItem(`gameState_${todayDateString}`, JSON.stringify(initialState));
+    }
+  }, [dailyBookData]);
+  
+  // Usa localGameState come stato del gioco
+  const gameState = localGameState;
   
   // Check localStorage for persisted game data
   useEffect(() => {
@@ -111,9 +153,9 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     staleTime: 3600000, // 1 hour
   });
   
-  // Submit guess mutation
+  // Submit guess mutation - ora gestito principalmente lato client
   const { 
-    mutate: submitGuess,
+    mutate: submitGuessToServer,
     isPending
   } = useMutation({
     mutationFn: async (bookTitle: string) => {
@@ -130,66 +172,83 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
         return;
       }
       
-      // Log game state data for debugging
-      console.log("Game state updated:", JSON.stringify(data.gameState));
+      // Il server ora restituisce solo il risultato del tentativo, non l'intero stato
+      const { guessResult, dailyBook: correctBook } = data;
       
-      // Fix per il problema di aggiornamento dell'interfaccia
-      if (data.gameState) {
-        // Verifica se gli attributi rivelati sono presenti e validi
-        if (data.gameState.revealedAttributes) {
-          // Conta quanti attributi sono rivelati
-          const revealedAttrs = data.gameState.revealedAttributes.filter((attr: any) => attr.revealed === true);
-          console.log(`Numero di attributi rivelati: ${revealedAttrs.length}`, revealedAttrs);
+      if (!localGameState) return;
+      
+      // Aggiorniamo lo stato localmente
+      const updatedState = { ...localGameState };
+      updatedState.remainingAttempts--;
+      updatedState.guesses.push(guessResult);
+      
+      // Aggiorna gli attributi rivelati in base al tentativo
+      if (updatedState.revealedAttributes && guessResult) {
+        updatedState.revealedAttributes.forEach((attr: any, index: number) => {
+          let matchStatus: "correct" | "partial" | "incorrect" | null = null;
           
-          // Verifica ogni attributo individualmente
-          data.gameState.revealedAttributes.forEach((attr: any, index: number) => {
-            console.log(`Attributo ${index} - ${attr.name}: revealed = ${attr.revealed}, value = ${attr.value}`);
-          });
-        }
-        
-        // Salva lo stato del gioco nel localStorage per poterlo utilizzare nell'interfaccia
-        try {
-          localStorage.setItem('gameState', JSON.stringify(data.gameState));
-          console.log("Stato del gioco salvato in localStorage");
-        } catch (e) {
-          console.error("Errore nel salvataggio in localStorage:", e);
-        }
-        
-        // ✓ CORREZIONE FONDAMENTALE: Forza il refresh della query per causare un
-        // nuovo rendering dell'interfaccia utente con i nuovi dati
-        queryClient.invalidateQueries({ queryKey: ['/api/game'] });
-        
-        // Imposta i dati direttamente nella cache per evitare un flash dell'interfaccia
-        setTimeout(() => {
-          queryClient.setQueryData(['/api/game'], data.gameState);
+          if (attr.name === "Publication Year") {
+            matchStatus = guessResult.attributes.publicationYear.status;
+          } else if (attr.name === "Genre") {
+            matchStatus = guessResult.attributes.genre.status;
+          } else if (attr.name === "Author's Country") {
+            matchStatus = guessResult.attributes.authorsCountry.status;
+          } else if (attr.name === "Pages") {
+            matchStatus = guessResult.attributes.pages.status;
+          } else if (attr.name === "Author") {
+            matchStatus = guessResult.attributes.author.status;
+          } else if (attr.name === "Original Language") {
+            matchStatus = guessResult.attributes.originalLanguage.status;
+          } else if (attr.name === "Historical Period") {
+            matchStatus = guessResult.attributes.historicalPeriod.status;
+          }
           
-          // Forza un secondo refresh dopo un breve delay
-          setTimeout(() => {
-            refetchGameState();
-          }, 200);
-        }, 50);
-        
-        // Informazioni di debug sul rendering dell'interfaccia
-        console.log("Stato cache aggiornato con i nuovi attributi rivelati");
-        
-        // Se il tentativo è errato e il gioco non è ancora finito, mostra l'animazione shake
-        if (!data.dailyBook && data.gameState.gameStatus === "active") {
-          // Trigger shake animation per tentativi errati
-          setTimeout(() => {
-            const event = new CustomEvent('incorrectGuess');
-            window.dispatchEvent(event);
-          }, 300);
-        }
+          if (matchStatus === "correct") {
+            updatedState.revealedAttributes[index].revealed = true;
+            console.log(`Rivelato attributo ${attr.name} perché corrisponde esattamente`);
+          }
+        });
       }
       
-      if (data.dailyBook) {
-        setDailyBook(data.dailyBook);
+      // Conta quanti attributi sono rivelati
+      const revealedAttrs = updatedState.revealedAttributes.filter((attr: any) => attr.revealed === true);
+      console.log(`Numero di attributi rivelati: ${revealedAttrs.length}`);
+    
+      // Verifica se il gioco è finito
+      if (guessResult.isCorrect) {
+        updatedState.gameStatus = "won";
+      } else if (updatedState.remainingAttempts <= 0) {
+        updatedState.gameStatus = "lost";
+      }
+      
+      // Salva lo stato del gioco aggiornato nel localStorage
+      const todayDateString = getTodayDateString();
+      try {
+        localStorage.setItem(`gameState_${todayDateString}`, JSON.stringify(updatedState));
+        console.log("Stato del gioco salvato in localStorage");
+      } catch (e) {
+        console.error("Errore nel salvataggio in localStorage:", e);
+      }
+      
+      // Aggiorna lo stato React
+      setLocalGameState(updatedState);
+      
+      // Se il tentativo è errato e il gioco non è ancora finito, mostra l'animazione shake
+      if (!correctBook && updatedState.gameStatus === "active") {
+        setTimeout(() => {
+          const event = new CustomEvent('incorrectGuess');
+          window.dispatchEvent(event);
+        }, 300);
+      }
+      
+      // Se abbiamo indovinato, salva il libro e mostra il modale
+      if (correctBook) {
+        setDailyBook(correctBook);
         
         // Salva il libro indovinato nel localStorage per la persistenza
-        const todayDateString = getTodayDateString();
         try {
-          localStorage.setItem(`dailyBook_${todayDateString}`, JSON.stringify(data.dailyBook));
-          console.log("Libro del giorno salvato in localStorage:", data.dailyBook.title);
+          localStorage.setItem(`dailyBook_${todayDateString}`, JSON.stringify(correctBook));
+          console.log("Libro del giorno salvato in localStorage:", correctBook.title);
         } catch (e) {
           console.error("Errore nel salvataggio del libro nel localStorage:", e);
         }
@@ -203,9 +262,6 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
           // Show the result modal immediately
           openGameResultModal();
         }
-        
-        // Blocchiamo l'aggiornamento automatico delle statistiche qui per evitare loop
-        // L'aggiornamento delle statistiche avverrà solo quando l'utente interagisce con il modale
       }
     },
     onError: (error) => {
@@ -288,7 +344,7 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
     
     // Submit the guess
-    submitGuess(bookTitle);
+    submitGuessToServer(bookTitle);
   };
   
   // Search books
