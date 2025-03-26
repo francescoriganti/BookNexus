@@ -249,20 +249,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get today's game state
   app.get("/api/game", async (req: Request, res: Response) => {
-    const today = getTodayDateString();
-    const resetGame = req.query.reset === 'true';
-    
-    let gameState = await activeStorage.getGameState(today);
-    
-    if (!gameState || resetGame) {
-      // Create new game state for today
-      gameState = await activeStorage.createGameState(today);
+    try {
+      const today = getTodayDateString();
+      const resetGame = req.query.reset === 'true';
+      const bookTitle = req.query.book as string | undefined;
+      
+      // Handle reset with specific book title
+      if (resetGame && bookTitle) {
+        console.log(`Setting "${bookTitle}" as the daily book`);
+        
+        // Find the book by title
+        const book = await activeStorage.getBookByTitle(bookTitle);
+        
+        if (!book) {
+          return res.status(404).json({ 
+            error: `Book "${bookTitle}" not found in database`,
+            success: false
+          });
+        }
+        
+        // Create a new game state with this specific book
+        const gameState = await activeStorage.createGameState(today);
+        
+        // Force the daily book ID to be the selected book's ID
+        // This is a hack since we can't modify the createGameState method directly
+        gameState.dailyBookId = book.id;
+        await activeStorage.updateGameState(gameState);
+        
+        return res.json({ 
+          success: true, 
+          message: `Game reset with "${bookTitle}" as the answer`
+        });
+      }
+      
+      // Standard reset (random book)
+      if (resetGame) {
+        const newGameState = await activeStorage.createGameState(today);
+        return res.json({ 
+          success: true, 
+          message: "Game reset with a new daily book"
+        });
+      }
+      
+      // Normal game state retrieval
+      let gameState = await activeStorage.getGameState(today);
+      
+      if (!gameState) {
+        // Create new game state for today if none exists
+        gameState = await activeStorage.createGameState(today);
+      }
+      
+      // Don't send the book ID in the response to avoid cheating
+      const { dailyBookId, ...safeGameState } = gameState;
+      
+      res.json(safeGameState);
+    } catch (error) {
+      console.error("Error in /api/game:", error);
+      res.status(500).json({ error: "An error occurred", success: false });
     }
-    
-    // Don't send the book ID in the response to avoid cheating
-    const { dailyBookId, ...safeGameState } = gameState;
-    
-    res.json(safeGameState);
   });
   
   // Submit a guess

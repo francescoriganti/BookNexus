@@ -181,19 +181,27 @@ export class MemStorage implements IStorage {
   
   // Game methods
   async getDailyBook(date: string): Promise<Book> {
-    // Use Pride and Prejudice as today's book per user request
-    const books = Array.from(this.books.values());
-    const prideAndPrejudice = books.find(book => book.title === "Pride and Prejudice");
-    
-    if (prideAndPrejudice) {
-      return prideAndPrejudice;
+    // Check if we have a custom book ID in the date string (format: YYYY-MM-DD_BOOKID)
+    const parts = date.split('_');
+    if (parts.length > 1) {
+      const bookId = parseInt(parts[1], 10);
+      if (!isNaN(bookId)) {
+        const book = this.books.get(bookId);
+        if (book) {
+          console.log(`Using custom book "${book.title}" as daily book`);
+          return book;
+        }
+      }
     }
     
-    // Fallback to the original logic
-    const dateObj = new Date(date);
+    const books = Array.from(this.books.values());
+    
+    // Use the date to deterministically select a book
+    const dateObj = new Date(parts[0]); // Use first part as date
     const dateNum = dateObj.getFullYear() * 10000 + (dateObj.getMonth() + 1) * 100 + dateObj.getDate();
     const index = dateNum % books.length;
     
+    console.log(`Using random book "${books[index].title}" as daily book based on date`);
     return books[index];
   }
   
