@@ -1,67 +1,53 @@
--- This file contains SQL statements to create the necessary tables in Supabase
-
--- Users table
+-- Create the users table
 CREATE TABLE IF NOT EXISTS users (
-  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  username VARCHAR NOT NULL UNIQUE,
-  email VARCHAR,
-  passwordHash VARCHAR,
-  createdAt TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id SERIAL PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL
 );
 
--- Books table
+-- Create the books table
 CREATE TABLE IF NOT EXISTS books (
-  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  title VARCHAR NOT NULL,
-  author VARCHAR NOT NULL,
-  publicationYear INTEGER NOT NULL,
-  genre VARCHAR NOT NULL,
-  authorsCountry VARCHAR NOT NULL,
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  publication_year INTEGER NOT NULL,
+  genre TEXT NOT NULL,
+  authors_country TEXT NOT NULL,
   pages INTEGER NOT NULL,
-  originalLanguage VARCHAR NOT NULL,
-  historicalPeriod VARCHAR NOT NULL,
-  createdAt TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  original_language TEXT NOT NULL,
+  historical_period TEXT NOT NULL
 );
 
--- Game States table
-CREATE TABLE IF NOT EXISTS game_states (
-  id VARCHAR PRIMARY KEY,
-  date VARCHAR NOT NULL,
-  dailyBookId BIGINT NOT NULL REFERENCES books(id),
-  remainingAttempts INTEGER NOT NULL,
-  guesses JSONB NOT NULL,
-  revealedAttributes JSONB NOT NULL,
-  gameStatus VARCHAR NOT NULL CHECK (gameStatus IN ('active', 'won', 'lost')),
-  createdAt TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Game Stats table
+-- Create the game_stats table
 CREATE TABLE IF NOT EXISTS game_stats (
-  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  userId BIGINT NOT NULL REFERENCES users(id),
-  gamesPlayed INTEGER NOT NULL DEFAULT 0,
-  gamesWon INTEGER NOT NULL DEFAULT 0,
-  currentStreak INTEGER NOT NULL DEFAULT 0,
-  maxStreak INTEGER NOT NULL DEFAULT 0,
-  guessDistribution VARCHAR NOT NULL DEFAULT '[]',
-  lastPlayed TIMESTAMP WITH TIME ZONE,
-  createdAt TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  games_played INTEGER NOT NULL DEFAULT 0,
+  games_won INTEGER NOT NULL DEFAULT 0,
+  current_streak INTEGER NOT NULL DEFAULT 0,
+  max_streak INTEGER NOT NULL DEFAULT 0,
+  guess_distribution TEXT NOT NULL DEFAULT '[]',
+  last_played DATE
 );
 
--- Create a sample user for testing
-INSERT INTO users (username) 
-VALUES ('test_user')
-ON CONFLICT (username) DO NOTHING;
+-- Create the game_states table
+CREATE TABLE IF NOT EXISTS game_states (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  daily_book_id INTEGER NOT NULL,
+  remaining_attempts INTEGER NOT NULL,
+  guesses TEXT NOT NULL,
+  revealed_attributes TEXT NOT NULL,
+  game_status TEXT NOT NULL
+);
 
--- Add some sample books
-INSERT INTO books (title, author, publicationYear, genre, authorsCountry, pages, originalLanguage, historicalPeriod) 
+-- Insert sample books
+INSERT INTO books (title, author, publication_year, genre, authors_country, pages, original_language, historical_period)
 VALUES 
-('To Kill a Mockingbird', 'Harper Lee', 1960, 'Fiction', 'United States', 281, 'English', '1930s'),
-('1984', 'George Orwell', 1949, 'Dystopian', 'United Kingdom', 328, 'English', 'Future'),
-('Pride and Prejudice', 'Jane Austen', 1813, 'Romance', 'United Kingdom', 432, 'English', 'Regency'),
-('The Great Gatsby', 'F. Scott Fitzgerald', 1925, 'Fiction', 'United States', 180, 'English', '1920s'),
+('To Kill a Mockingbird', 'Harper Lee', 1960, 'Fiction', 'United States', 281, 'English', 'Great Depression'),
+('1984', 'George Orwell', 1949, 'Dystopian', 'United Kingdom', 328, 'English', 'Post-WWII'),
+('Pride and Prejudice', 'Jane Austen', 1813, 'Romance', 'United Kingdom', 432, 'English', 'Regency Era'),
 ('One Hundred Years of Solitude', 'Gabriel García Márquez', 1967, 'Magical Realism', 'Colombia', 417, 'Spanish', '19th-20th Century'),
-('The Hobbit', 'J.R.R. Tolkien', 1937, 'Fantasy', 'United Kingdom', 310, 'English', 'Fictional Universe'),
 ('Crime and Punishment', 'Fyodor Dostoevsky', 1866, 'Psychological Fiction', 'Russia', 545, 'Russian', '19th Century'),
-('The Alchemist', 'Paulo Coelho', 1988, 'Adventure', 'Brazil', 197, 'Portuguese', 'Contemporary')
-ON CONFLICT DO NOTHING;
+('The Great Gatsby', 'F. Scott Fitzgerald', 1925, 'Fiction', 'United States', 180, 'English', 'Roaring Twenties'),
+('Moby-Dick', 'Herman Melville', 1851, 'Adventure', 'United States', 635, 'English', '19th Century');

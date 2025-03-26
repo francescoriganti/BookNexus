@@ -224,9 +224,16 @@ export class MemStorage implements IStorage {
     const id = this.statsCurrentId++;
     const existingStats = await this.getGameStats(insertStats.userId);
     
+    // Ensure all fields have values
     const stats: GameStats = { 
-      ...insertStats, 
-      id: existingStats?.id || id
+      id: existingStats?.id || id,
+      userId: insertStats.userId,
+      gamesPlayed: insertStats.gamesPlayed ?? 0,
+      gamesWon: insertStats.gamesWon ?? 0,
+      currentStreak: insertStats.currentStreak ?? 0,
+      maxStreak: insertStats.maxStreak ?? 0,
+      guessDistribution: insertStats.guessDistribution ?? "[]",
+      lastPlayed: insertStats.lastPlayed ?? null
     };
     
     this.gameStatsByUser.set(stats.userId, stats);

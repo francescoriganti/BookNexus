@@ -4,9 +4,140 @@ import { storage } from "./storage";
 import { supabaseStorage } from "./supabase-storage";
 import { z } from "zod";
 import { insertBookSchema } from "@shared/schema";
+import { log } from "./vite";
+import { type IStorage } from "./storage";
 
-// Use Supabase storage instead of in-memory storage if SUPABASE_KEY is set
-const activeStorage = process.env.SUPABASE_KEY ? supabaseStorage : storage;
+// Create a new storage implementation that falls back to in-memory storage if Supabase fails
+class FallbackStorage implements IStorage {
+  private primaryStorage: IStorage;
+  private fallbackStorage: IStorage;
+  private usesFallback = false;
+
+  constructor(primaryStorage: IStorage, fallbackStorage: IStorage) {
+    this.primaryStorage = primaryStorage;
+    this.fallbackStorage = fallbackStorage;
+  }
+
+  private async withFallback<T>(primaryFn: () => Promise<T>, fallbackFn: () => Promise<T>): Promise<T> {
+    try {
+      // Try the primary storage first
+      if (!this.usesFallback) {
+        return await primaryFn();
+      }
+    } catch (error) {
+      // Log the error and mark to use fallback from now on
+      log(`Error using primary storage: ${(error as Error).message}. Falling back to in-memory storage.`);
+      this.usesFallback = true;
+    }
+    // Use the fallback storage
+    return fallbackFn();
+  }
+
+  // User methods
+  async getUser(id: number) {
+    return this.withFallback(
+      () => this.primaryStorage.getUser(id),
+      () => this.fallbackStorage.getUser(id)
+    );
+  }
+
+  async getUserByUsername(username: string) {
+    return this.withFallback(
+      () => this.primaryStorage.getUserByUsername(username),
+      () => this.fallbackStorage.getUserByUsername(username)
+    );
+  }
+
+  async createUser(user: import('@shared/schema').InsertUser) {
+    return this.withFallback(
+      () => this.primaryStorage.createUser(user),
+      () => this.fallbackStorage.createUser(user)
+    );
+  }
+
+  // Book methods
+  async getBooks() {
+    return this.withFallback(
+      () => this.primaryStorage.getBooks(),
+      () => this.fallbackStorage.getBooks()
+    );
+  }
+
+  async getBook(id: number) {
+    return this.withFallback(
+      () => this.primaryStorage.getBook(id),
+      () => this.fallbackStorage.getBook(id)
+    );
+  }
+
+  async getBookByTitle(title: string) {
+    return this.withFallback(
+      () => this.primaryStorage.getBookByTitle(title),
+      () => this.fallbackStorage.getBookByTitle(title)
+    );
+  }
+
+  async addBook(book: import('@shared/schema').InsertBook) {
+    return this.withFallback(
+      () => this.primaryStorage.addBook(book),
+      () => this.fallbackStorage.addBook(book)
+    );
+  }
+
+  // Game methods
+  async getDailyBook(date: string) {
+    return this.withFallback(
+      () => this.primaryStorage.getDailyBook(date),
+      () => this.fallbackStorage.getDailyBook(date)
+    );
+  }
+
+  async getGameState(date: string) {
+    return this.withFallback(
+      () => this.primaryStorage.getGameState(date),
+      () => this.fallbackStorage.getGameState(date)
+    );
+  }
+
+  async createGameState(date: string) {
+    return this.withFallback(
+      () => this.primaryStorage.createGameState(date),
+      () => this.fallbackStorage.createGameState(date)
+    );
+  }
+
+  async updateGameState(gameState: import('@shared/schema').GameState) {
+    return this.withFallback(
+      () => this.primaryStorage.updateGameState(gameState),
+      () => this.fallbackStorage.updateGameState(gameState)
+    );
+  }
+
+  // Stats methods
+  async getGameStats(userId: number) {
+    return this.withFallback(
+      () => this.primaryStorage.getGameStats(userId),
+      () => this.fallbackStorage.getGameStats(userId)
+    );
+  }
+
+  async updateGameStats(stats: import('@shared/schema').InsertGameStats) {
+    return this.withFallback(
+      () => this.primaryStorage.updateGameStats(stats),
+      () => this.fallbackStorage.updateGameStats(stats)
+    );
+  }
+}
+
+// Determine which storage to use
+let activeStorage: IStorage;
+if (process.env.SUPABASE_KEY) {
+  log('Using Supabase storage with fallback to in-memory storage');
+  activeStorage = new FallbackStorage(supabaseStorage, storage);
+} else {
+  log('Using in-memory storage only');
+  activeStorage = storage;
+}
 
 // Helper for date formatting
 function getTodayDateString(): string {
@@ -26,14 +157,14 @@ async function checkGuess(bookTitle: string, date: string) {
   const isCorrect = guessedBook.id === dailyBook.id;
   
   // Define matching criteria
-  const getPublicationYearStatus = () => {
+  const getPublicationYearStatus = (): "correct" | "partial" | "incorrect" => {
     const diff = Math.abs(guessedBook.publicationYear - dailyBook.publicationYear);
     if (diff === 0) return "correct";
     if (diff <= 10) return "partial";
     return "incorrect";
   };
   
-  const getPagesStatus = () => {
+  const getPagesStatus = (): "correct" | "partial" | "incorrect" => {
     const diff = Math.abs(guessedBook.pages - dailyBook.pages);
     const percentage = diff / dailyBook.pages;
     if (diff === 0) return "correct";
@@ -41,8 +172,8 @@ async function checkGuess(bookTitle: string, date: string) {
     return "incorrect";
   };
   
-  // Create guess result
-  const guess = {
+  // Create guess result with proper type annotations
+  const guess: import('@shared/schema').GameGuess = {
     title: guessedBook.title,
     isCorrect,
     attributes: {
@@ -87,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get all books (for search functionality)
   app.get("/api/books", async (req: Request, res: Response) => {
-    const books = await storage.getBooks();
+    const books = await activeStorage.getBooks();
     res.json(books.map(book => ({ id: book.id, title: book.title, author: book.author })));
   });
   
@@ -99,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json([]);
     }
     
-    const books = await storage.getBooks();
+    const books = await activeStorage.getBooks();
     const filteredBooks = books.filter(book => 
       book.title.toLowerCase().includes(searchQuery.toLowerCase())
     ).map(book => ({ id: book.id, title: book.title, author: book.author }));
@@ -111,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/books", async (req: Request, res: Response) => {
     try {
       const bookData = insertBookSchema.parse(req.body);
-      const newBook = await storage.addBook(bookData);
+      const newBook = await activeStorage.addBook(bookData);
       res.status(201).json(newBook);
     } catch (error) {
       res.status(400).json({ error: "Invalid book data" });
@@ -122,11 +253,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/game", async (req: Request, res: Response) => {
     const today = getTodayDateString();
     
-    let gameState = await storage.getGameState(today);
+    let gameState = await activeStorage.getGameState(today);
     
     if (!gameState) {
       // Create new game state for today
-      gameState = await storage.createGameState(today);
+      gameState = await activeStorage.createGameState(today);
     }
     
     // Don't send the book ID in the response to avoid cheating
@@ -146,9 +277,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = getTodayDateString();
       
       // Get or create game state
-      let gameState = await storage.getGameState(today);
+      let gameState = await activeStorage.getGameState(today);
       if (!gameState) {
-        gameState = await storage.createGameState(today);
+        gameState = await activeStorage.createGameState(today);
       }
       
       // Check if game is already over
@@ -168,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       gameState.guesses.push(guessResult);
       
       // Reveal one attribute
-      const unrevealed = gameState.revealedAttributes.filter(attr => !attr.revealed);
+      const unrevealed = gameState.revealedAttributes.filter((attr: { revealed: boolean }) => !attr.revealed);
       if (unrevealed.length > 0) {
         // Reveal attributes in a specific order
         const orderPriority = [
@@ -179,7 +310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Find the next attribute to reveal
         let nextToReveal = null;
         for (const attrName of orderPriority) {
-          const attr = unrevealed.find(a => a.name === attrName);
+          const attr = unrevealed.find((a: { name: string }) => a.name === attrName);
           if (attr) {
             nextToReveal = attr;
             break;
@@ -193,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (nextToReveal) {
           const index = gameState.revealedAttributes.findIndex(
-            attr => attr.name === nextToReveal?.name
+            (attr: { name: string }) => attr.name === nextToReveal?.name
           );
           if (index !== -1) {
             gameState.revealedAttributes[index].revealed = true;
@@ -209,11 +340,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Save updated game state
-      await storage.updateGameState(gameState);
+      await activeStorage.updateGameState(gameState);
       
       // If game is over, include the correct book
       if (gameState.gameStatus !== "active") {
-        const dailyBook = await storage.getBook(gameState.dailyBookId);
+        const dailyBook = await activeStorage.getBook(gameState.dailyBookId);
         return res.json({ 
           guessResult, 
           gameState: { 
@@ -237,18 +368,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // For simplicity, we'll use a fixed user ID
     const userId = 1;
     
-    let stats = await storage.getGameStats(userId);
+    let stats = await activeStorage.getGameStats(userId);
     
     if (!stats) {
       // Create default stats
-      stats = await storage.updateGameStats({
+      stats = await activeStorage.updateGameStats({
         userId,
         gamesPlayed: 0,
         gamesWon: 0,
         currentStreak: 0,
         maxStreak: 0,
         guessDistribution: "[]", // Empty JSON array as string
-        lastPlayed: undefined
+        lastPlayed: null
       });
     }
     
@@ -270,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = 1; // Using fixed user ID for simplicity
       
       // Get or create stats
-      let stats = await storage.getGameStats(userId);
+      let stats = await activeStorage.getGameStats(userId);
       
       if (!stats) {
         stats = {
@@ -281,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currentStreak: 0,
           maxStreak: 0,
           guessDistribution: "[]",
-          lastPlayed: undefined
+          lastPlayed: null
         };
       }
       
@@ -313,10 +444,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Save updated stats
-      const updatedStats = await storage.updateGameStats({
+      const updatedStats = await activeStorage.updateGameStats({
         ...stats,
         guessDistribution: JSON.stringify(distribution),
-        lastPlayed: today
+        lastPlayed: today.toISOString().split('T')[0] // Convert to YYYY-MM-DD string
       });
       
       res.json({

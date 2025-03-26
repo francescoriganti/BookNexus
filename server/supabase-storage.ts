@@ -1,14 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import { type IStorage } from './storage';
 import { 
-  type IStorage, 
   type Book, 
   type InsertBook, 
   type User, 
   type InsertUser, 
   type GameStats, 
   type InsertGameStats, 
-  type GameState 
-} from './storage';
+  type GameState,
+  type GameGuess,
+  type BookAttribute
+} from '@shared/schema';
 import { getTodayDateString } from '../client/src/lib/utils';
 
 const supabaseUrl = 'https://nkcoydainagcupxxkra.supabase.co';
@@ -59,7 +61,19 @@ export class SupabaseStorage implements IStorage {
       .select('*');
     
     if (error) return [];
-    return data as Book[];
+    
+    // Convert from snake_case to camelCase
+    return data.map(book => ({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      publicationYear: book.publication_year,
+      genre: book.genre,
+      authorsCountry: book.authors_country,
+      pages: book.pages,
+      originalLanguage: book.original_language,
+      historicalPeriod: book.historical_period
+    })) as Book[];
   }
 
   async getBook(id: number): Promise<Book | undefined> {
@@ -70,7 +84,19 @@ export class SupabaseStorage implements IStorage {
       .single();
     
     if (error || !data) return undefined;
-    return data as Book;
+    
+    // Convert from snake_case to camelCase
+    return {
+      id: data.id,
+      title: data.title,
+      author: data.author,
+      publicationYear: data.publication_year,
+      genre: data.genre,
+      authorsCountry: data.authors_country,
+      pages: data.pages,
+      originalLanguage: data.original_language,
+      historicalPeriod: data.historical_period
+    } as Book;
   }
 
   async getBookByTitle(title: string): Promise<Book | undefined> {
@@ -81,18 +107,54 @@ export class SupabaseStorage implements IStorage {
       .single();
     
     if (error || !data) return undefined;
-    return data as Book;
+    
+    // Convert from snake_case to camelCase
+    return {
+      id: data.id,
+      title: data.title,
+      author: data.author,
+      publicationYear: data.publication_year,
+      genre: data.genre,
+      authorsCountry: data.authors_country,
+      pages: data.pages,
+      originalLanguage: data.original_language,
+      historicalPeriod: data.historical_period
+    } as Book;
   }
 
   async addBook(insertBook: InsertBook): Promise<Book> {
+    // Convert to snake_case for Supabase
+    const dbData = {
+      title: insertBook.title,
+      author: insertBook.author,
+      publication_year: insertBook.publicationYear,
+      genre: insertBook.genre,
+      authors_country: insertBook.authorsCountry,
+      pages: insertBook.pages,
+      original_language: insertBook.originalLanguage,
+      historical_period: insertBook.historicalPeriod
+    };
+    
     const { data, error } = await supabase
       .from('books')
-      .insert([insertBook])
+      .insert([dbData])
       .select()
       .single();
     
     if (error) throw new Error(`Failed to create book: ${error.message}`);
-    return data as Book;
+    
+    // Convert from snake_case to camelCase
+    return {
+      id: data.id,
+      title: data.title,
+      author: data.author,
+      publicationYear: data.publication_year,
+      genre: data.genre,
+      authorsCountry: data.authors_country,
+      pages: data.pages,
+      originalLanguage: data.original_language,
+      historicalPeriod: data.historical_period
+    } as Book;
   }
 
   // Game methods
@@ -113,7 +175,19 @@ export class SupabaseStorage implements IStorage {
     const dateNum = dateObj.getDate() + dateObj.getMonth() * 31;
     const bookIndex = dateNum % books.length;
     
-    return books[bookIndex] as Book;
+    // Get the selected book and convert from snake_case to camelCase
+    const book = books[bookIndex];
+    return {
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      publicationYear: book.publication_year,
+      genre: book.genre,
+      authorsCountry: book.authors_country,
+      pages: book.pages,
+      originalLanguage: book.original_language,
+      historicalPeriod: book.historical_period
+    } as Book;
   }
 
   async getGameState(date: string): Promise<GameState | undefined> {
@@ -125,11 +199,15 @@ export class SupabaseStorage implements IStorage {
     
     if (error || !data) return undefined;
     
-    // Parse JSON strings from database
+    // Parse JSON strings from database and convert to camelCase
     return {
-      ...data,
+      id: data.id,
+      date: data.date,
+      dailyBookId: data.daily_book_id,
+      remainingAttempts: data.remaining_attempts,
       guesses: JSON.parse(data.guesses),
-      revealedAttributes: JSON.parse(data.revealedAttributes)
+      revealedAttributes: JSON.parse(data.revealed_attributes),
+      gameStatus: data.game_status
     } as GameState;
   }
 
@@ -200,36 +278,46 @@ export class SupabaseStorage implements IStorage {
       gameStatus: "active"
     };
     
-    // Store as strings in database
+    // Store as strings in database with snake_case column names
     const { data, error } = await supabase
       .from('game_states')
       .insert([{
-        ...gameState,
         id: `game-${date}`,
+        date: date,
+        daily_book_id: gameState.dailyBookId,
+        remaining_attempts: gameState.remainingAttempts,
         guesses: JSON.stringify(gameState.guesses),
-        revealedAttributes: JSON.stringify(gameState.revealedAttributes)
+        revealed_attributes: JSON.stringify(gameState.revealedAttributes),
+        game_status: gameState.gameStatus
       }])
       .select()
       .single();
     
     if (error) throw new Error(`Failed to create game state: ${error.message}`);
     
-    // Parse the JSON strings back to objects
+    // Parse the JSON strings back to objects and convert to camelCase
     return {
-      ...data,
+      id: data.id,
+      date: data.date,
+      dailyBookId: data.daily_book_id,
+      remainingAttempts: data.remaining_attempts,
       guesses: JSON.parse(data.guesses),
-      revealedAttributes: JSON.parse(data.revealedAttributes)
+      revealedAttributes: JSON.parse(data.revealed_attributes),
+      gameStatus: data.game_status
     } as GameState;
   }
 
   async updateGameState(gameState: GameState): Promise<GameState> {
-    // Store arrays as JSON strings
+    // Convert to snake_case and store arrays as JSON strings
     const { data, error } = await supabase
       .from('game_states')
       .update({
-        ...gameState,
+        date: gameState.date,
+        daily_book_id: gameState.dailyBookId,
+        remaining_attempts: gameState.remainingAttempts,
         guesses: JSON.stringify(gameState.guesses),
-        revealedAttributes: JSON.stringify(gameState.revealedAttributes)
+        revealed_attributes: JSON.stringify(gameState.revealedAttributes),
+        game_status: gameState.gameStatus
       })
       .eq('id', gameState.id)
       .select()
@@ -237,11 +325,15 @@ export class SupabaseStorage implements IStorage {
     
     if (error) throw new Error(`Failed to update game state: ${error.message}`);
     
-    // Parse JSON strings back to objects
+    // Parse JSON strings back to objects and convert to camelCase
     return {
-      ...data,
+      id: data.id,
+      date: data.date,
+      dailyBookId: data.daily_book_id,
+      remainingAttempts: data.remaining_attempts,
       guesses: JSON.parse(data.guesses),
-      revealedAttributes: JSON.parse(data.revealedAttributes)
+      revealedAttributes: JSON.parse(data.revealed_attributes),
+      gameStatus: data.game_status
     } as GameState;
   }
 
@@ -250,38 +342,82 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabase
       .from('game_stats')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error || !data) return undefined;
-    return data as GameStats;
+    
+    // Convert from snake_case to camelCase
+    return {
+      id: data.id,
+      userId: data.user_id,
+      gamesPlayed: data.games_played,
+      gamesWon: data.games_won,
+      currentStreak: data.current_streak,
+      maxStreak: data.max_streak,
+      guessDistribution: data.guess_distribution,
+      lastPlayed: data.last_played
+    } as GameStats;
   }
 
   async updateGameStats(insertStats: InsertGameStats): Promise<GameStats> {
     // Check if stats exist
     const existing = await this.getGameStats(insertStats.userId);
     
+    // Convert to snake_case for Supabase
+    const dbData = {
+      user_id: insertStats.userId,
+      games_played: insertStats.gamesPlayed,
+      games_won: insertStats.gamesWon,
+      current_streak: insertStats.currentStreak,
+      max_streak: insertStats.maxStreak,
+      guess_distribution: insertStats.guessDistribution,
+      last_played: insertStats.lastPlayed
+    };
+    
     if (existing) {
       // Update existing stats
       const { data, error } = await supabase
         .from('game_stats')
-        .update(insertStats)
+        .update(dbData)
         .eq('id', existing.id)
         .select()
         .single();
       
       if (error) throw new Error(`Failed to update game stats: ${error.message}`);
-      return data as GameStats;
+      
+      // Convert back to camelCase
+      return {
+        id: data.id,
+        userId: data.user_id,
+        gamesPlayed: data.games_played,
+        gamesWon: data.games_won,
+        currentStreak: data.current_streak,
+        maxStreak: data.max_streak,
+        guessDistribution: data.guess_distribution,
+        lastPlayed: data.last_played
+      } as GameStats;
     } else {
       // Create new stats record
       const { data, error } = await supabase
         .from('game_stats')
-        .insert([insertStats])
+        .insert([dbData])
         .select()
         .single();
       
       if (error) throw new Error(`Failed to create game stats: ${error.message}`);
-      return data as GameStats;
+      
+      // Convert back to camelCase
+      return {
+        id: data.id,
+        userId: data.user_id,
+        gamesPlayed: data.games_played,
+        gamesWon: data.games_won,
+        currentStreak: data.current_streak,
+        maxStreak: data.max_streak,
+        guessDistribution: data.guess_distribution,
+        lastPlayed: data.last_played
+      } as GameStats;
     }
   }
 }
