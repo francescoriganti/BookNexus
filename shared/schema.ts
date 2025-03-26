@@ -28,6 +28,7 @@ export const books = pgTable("books", {
   pages: integer("pages").notNull(),
   originalLanguage: text("original_language").notNull(),
   historicalPeriod: text("historical_period").notNull(),
+  imageUrl: text("image_url"),  // URL dell'immagine di copertina del libro
 });
 
 export const insertBookSchema = createInsertSchema(books).omit({

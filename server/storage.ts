@@ -62,7 +62,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "United States",
         pages: 281,
         originalLanguage: "English",
-        historicalPeriod: "Great Depression"
+        historicalPeriod: "Great Depression",
+        imageUrl: "/book-covers/to-kill-a-mockingbird.jpg"
       },
       {
         title: "1984",
