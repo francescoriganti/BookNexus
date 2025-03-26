@@ -85,6 +85,16 @@ export class MemStorage implements IStorage {
         historicalPeriod: "Regency Era"
       },
       {
+        title: "Emma",
+        author: "Jane Austen",
+        publicationYear: 1815,
+        genre: "Romance",
+        authorsCountry: "United Kingdom",
+        pages: 474,
+        originalLanguage: "English",
+        historicalPeriod: "Regency Era"
+      },
+      {
         title: "One Hundred Years of Solitude",
         author: "Gabriel García Márquez",
         publicationYear: 1967,
