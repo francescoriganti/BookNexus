@@ -117,7 +117,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "Russia",
         pages: 545,
         originalLanguage: "Russian",
-        historicalPeriod: "19th Century"
+        historicalPeriod: "19th Century",
+        imageUrl: "/book-covers/crime-and-punishment.jpg"
       },
       {
         title: "The Great Gatsby",
@@ -127,7 +128,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "United States",
         pages: 180,
         originalLanguage: "English",
-        historicalPeriod: "Roaring Twenties"
+        historicalPeriod: "Roaring Twenties",
+        imageUrl: "/book-covers/the-great-gatsby.jpg"
       },
       {
         title: "Moby-Dick",
@@ -137,7 +139,8 @@ export class MemStorage implements IStorage {
         authorsCountry: "United States",
         pages: 635,
         originalLanguage: "English",
-        historicalPeriod: "19th Century"
+        historicalPeriod: "19th Century",
+        imageUrl: "/book-covers/moby-dick.jpg"
       }
     ];
     

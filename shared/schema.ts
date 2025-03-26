@@ -61,6 +61,7 @@ export type GameStats = typeof gameStats.$inferSelect;
 export type GameGuess = {
   title: string;
   isCorrect: boolean;
+  imageUrl?: string | null;
   attributes: {
     publicationYear: { value: number; status: "correct" | "partial" | "incorrect" };
     genre: { value: string; status: "correct" | "partial" | "incorrect" };
