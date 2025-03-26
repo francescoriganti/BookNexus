@@ -135,6 +135,15 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
         
         // Informazioni di debug sul rendering dell'interfaccia
         console.log("Stato cache aggiornato con i nuovi attributi rivelati");
+        
+        // Se il tentativo è errato e il gioco non è ancora finito, mostra l'animazione shake
+        if (!data.dailyBook && data.gameState.gameStatus === "active") {
+          // Trigger shake animation per tentativi errati
+          setTimeout(() => {
+            const event = new CustomEvent('incorrectGuess');
+            window.dispatchEvent(event);
+          }, 300);
+        }
       }
       
       if (data.dailyBook) {
@@ -153,6 +162,10 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
         description: "Failed to submit guess",
         variant: "destructive"
       });
+      
+      // Trigger shake animation
+      const event = new CustomEvent('incorrectGuess');
+      window.dispatchEvent(event);
     }
   });
   

@@ -99,27 +99,34 @@ export default function BookSearch({ value, onChange, disabled = false }: BookSe
 
   return (
     <div className="relative mb-6">
-      <Search className="absolute top-3 left-3 h-5 w-5 text-slate-400" />
-      <Input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          // Se l'utente sta scrivendo, resettiamo l'ultima selezione
-          if (e.target.value !== lastSelected) {
-            setLastSelected("");
-          }
-        }}
-        className="w-full pl-10 pr-4 py-6"
-        placeholder="Type a book title..."
-        disabled={disabled}
-        onFocus={() => {
-          if (value.trim().length > 1 && value !== lastSelected) {
-            setShowResults(true);
-          }
-        }}
-      />
+      <Search className="absolute top-3 left-3 h-5 w-5 text-slate-400 z-10" />
+      <motion.div
+        animate={shake ? { 
+          x: [0, -10, 10, -10, 10, -5, 5, -2, 2, 0],
+          transition: { duration: 0.5 }
+        } : {}}
+      >
+        <Input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            // Se l'utente sta scrivendo, resettiamo l'ultima selezione
+            if (e.target.value !== lastSelected) {
+              setLastSelected("");
+            }
+          }}
+          className="w-full pl-10 pr-4 py-6"
+          placeholder="Type a book title..."
+          disabled={disabled}
+          onFocus={() => {
+            if (value.trim().length > 1 && value !== lastSelected) {
+              setShowResults(true);
+            }
+          }}
+        />
+      </motion.div>
       
       {showResults && (
         <div 
