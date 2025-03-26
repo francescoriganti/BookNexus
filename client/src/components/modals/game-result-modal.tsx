@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import CountdownTimer from "@/components/countdown-timer";
 import { generateShareText } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { type Book } from "@shared/schema";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 
 type GameResultModalProps = {
   gameStatus: "active" | "won" | "lost";
@@ -30,12 +32,53 @@ export default function GameResultModal({
 }: GameResultModalProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [confettiShown, setConfettiShown] = useState(false);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
   
   // Effetto per aprire il modale quando cambia lo stato del gioco o quando viene cliccato il trigger
   useEffect(() => {
     // Aggiorniamo lo stato del modale in base allo stato del gioco
     if (gameStatus === "won" || gameStatus === "lost") {
       setOpen(true);
+      
+      // Se ha vinto, mostra i confetti
+      if (gameStatus === "won" && !confettiShown) {
+        setConfettiShown(true);
+        
+        // Funzione per lanciare i confetti
+        setTimeout(() => {
+          const duration = 3 * 1000;
+          const animationEnd = Date.now() + duration;
+          const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+          
+          function randomInRange(min: number, max: number) {
+            return Math.random() * (max - min) + min;
+          }
+          
+          // Lancio i confetti a intervalli
+          const interval = setInterval(() => {
+            const timeLeft = animationEnd - Date.now();
+            
+            if (timeLeft <= 0) {
+              return clearInterval(interval);
+            }
+            
+            const particleCount = 50 * (timeLeft / duration);
+            
+            // Confetti dai lati
+            confetti({
+              ...defaults,
+              particleCount,
+              origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+            });
+            confetti({
+              ...defaults,
+              particleCount,
+              origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+            });
+          }, 250);
+        }, 500);
+      }
     }
     
     // Aggiungiamo un listener per il click sul trigger
@@ -49,7 +92,7 @@ export default function GameResultModal({
     return () => {
       triggerEl?.removeEventListener("click", handleTriggerClick);
     };
-  }, [gameStatus]);
+  }, [gameStatus, confettiShown]);
   
   const isGameOver = gameStatus === "won" || gameStatus === "lost";
   
@@ -118,27 +161,60 @@ export default function GameResultModal({
               : "You ran out of attempts. The correct book was:"}
           </p>
           
-          <div className="flex flex-col items-center mb-6 py-4 px-6 bg-slate-50 rounded-lg">
+          <motion.div 
+            className="flex flex-col items-center mb-6 py-4 px-6 bg-slate-50 rounded-lg"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 400,
+              damping: 17,
+              delay: 0.1
+            }}
+          >
             {dailyBook?.imageUrl && (
-              <div className="mb-4 w-24 h-36 overflow-hidden rounded-md shadow-sm">
-                <img 
+              <motion.div 
+                className="mb-4 w-24 h-36 overflow-hidden rounded-md shadow-sm"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                <motion.img 
                   src={dailyBook.imageUrl} 
                   alt={`Cover of ${dailyBook.title}`} 
                   className="w-full h-full object-cover"
+                  initial={{ scale: 1.2 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
                 />
-              </div>
+              </motion.div>
             )}
-            <span className="font-serif text-xl font-semibold mb-2">
+            <motion.span 
+              className="font-serif text-xl font-semibold mb-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+            >
               {dailyBook?.title || "—"}
-            </span>
-            <span className="text-slate-500 mb-1">
+            </motion.span>
+            <motion.span 
+              className="text-slate-500 mb-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.3 }}
+            >
               by {dailyBook?.author || "—"}
-            </span>
-            <div className="flex items-center text-slate-500 text-sm">
+            </motion.span>
+            <motion.div 
+              className="flex items-center text-slate-500 text-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.3 }}
+            >
               <Calendar className="h-4 w-4 mr-1" />
               <span>{dailyBook?.publicationYear || "—"}</span>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
           
           <div className="mb-6">
             <p className="text-sm text-slate-500 mb-2">Share your result</p>

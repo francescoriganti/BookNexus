@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useGame } from "@/hooks/use-game";
 import { Input } from "@/components/ui/input";
 import { Book, Search } from "lucide-react";
+import { motion } from "framer-motion";
 
 type BookSearchProps = {
   value: string;
@@ -10,15 +11,39 @@ type BookSearchProps = {
 };
 
 export default function BookSearch({ value, onChange, disabled = false }: BookSearchProps) {
-  const { searchBooks } = useGame();
+  const { searchBooks, isPending } = useGame();
   const [results, setResults] = useState<{ id: number; title: string; author: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [shake, setShake] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   
   // Teniamo traccia dell'ultima selezione per evitare di riaprire il menu
   const [lastSelected, setLastSelected] = useState("");
+  
+  // Effetto per mostrare lo shake quando un tentativo è errato
+  useEffect(() => {
+    if (isPending) {
+      setShake(false);
+    }
+  }, [isPending]);
+  
+  // Funzione per attivare l'effetto shake
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+  
+  // Ascoltiamo un evento personalizzato che indica che il tentativo è errato
+  useEffect(() => {
+    const handleIncorrectGuess = () => {
+      triggerShake();
+    };
+    
+    window.addEventListener('incorrectGuess', handleIncorrectGuess);
+    return () => window.removeEventListener('incorrectGuess', handleIncorrectGuess);
+  }, []);
   
   // Handle search query
   useEffect(() => {
