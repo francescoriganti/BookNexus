@@ -83,21 +83,33 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
       
       // Log game state data for debugging
-      console.log("Game state updated:", data.gameState);
+      console.log("Game state updated:", JSON.stringify(data.gameState));
       
-      // Ensure we handle revealedAttributes properly
-      if (data.gameState && data.gameState.revealedAttributes) {
-        // Make sure revealedAttributes is properly processed
-        queryClient.setQueryData(['/api/game'], {
-          ...data.gameState,
-          revealedAttributes: data.gameState.revealedAttributes
-        });
+      // Fix per il problema di aggiornamento dell'interfaccia
+      if (data.gameState) {
+        // Verifica se gli attributi rivelati sono presenti e validi
+        if (data.gameState.revealedAttributes) {
+          // Conta quanti attributi sono rivelati
+          const revealedAttrs = data.gameState.revealedAttributes.filter((attr: any) => attr.revealed === true);
+          console.log(`Numero di attributi rivelati: ${revealedAttrs.length}`, revealedAttrs);
+          
+          // Verifica ogni attributo individualmente
+          data.gameState.revealedAttributes.forEach((attr: any, index: number) => {
+            console.log(`Attributo ${index} - ${attr.name}: revealed = ${attr.revealed}, value = ${attr.value}`);
+          });
+        }
         
-        // Check what we've revealed so far
-        const revealedCount = data.gameState.revealedAttributes.filter((attr: any) => attr.revealed).length;
-        console.log(`Revealed ${revealedCount} attributes so far`);
-      } else {
-        queryClient.setQueryData(['/api/game'], data.gameState);
+        // ✓ CORREZIONE FONDAMENTALE: Forza il refresh della query per causare un
+        // nuovo rendering dell'interfaccia utente con i nuovi dati
+        queryClient.invalidateQueries({ queryKey: ['/api/game'] });
+        
+        // Imposta i dati direttamente nella cache per evitare un flash dell'interfaccia
+        setTimeout(() => {
+          queryClient.setQueryData(['/api/game'], data.gameState);
+        }, 50);
+        
+        // Informazioni di debug sul rendering dell'interfaccia
+        console.log("Stato cache aggiornato con i nuovi attributi rivelati");
       }
       
       if (data.dailyBook) {

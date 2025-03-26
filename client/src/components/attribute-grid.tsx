@@ -18,31 +18,50 @@ const attributeIcons: Record<string, React.ReactNode> = {
 };
 
 export default function AttributeGrid({ attributes }: AttributeGridProps) {
-  // For debugging - remove in production
-  console.log("Rendering attribute grid with:", attributes);
+  // Aggiunta di più log per il debug
+  console.log("Rendering attribute grid with:", JSON.stringify(attributes));
+  
+  // Log degli attributi rivelati
+  const revealed = attributes.filter(attr => attr.revealed === true);
+  console.log(`Attributi effettivamente rivelati nel grid: ${revealed.length}`, revealed);
+
+  // Verifica se attributes è un array valido
+  if (!Array.isArray(attributes) || attributes.length === 0) {
+    console.warn("Attributi mancanti o non validi:", attributes);
+    return <div className="text-center">Caricamento attributi...</div>;
+  }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {attributes.map((attr, index) => (
-        <div 
-          key={index}
-          className={cn(
-            "attribute-card bg-white border border-slate-200 rounded-md p-3 text-center shadow-sm flex flex-col items-center transition-all duration-300",
-            attr.revealed 
-              ? "bg-white border-blue-200" 
-              : "bg-gray-50"
-          )}
-        >
-          {attributeIcons[attr.name] || <BookType className="h-5 w-5 text-slate-400" />}
-          <p className="text-xs text-slate-500 mb-1">{attr.name}</p>
-          <p className={cn(
-            "font-mono text-sm font-medium",
-            attr.revealed ? "text-blue-600" : "text-gray-400"
-          )}>
-            {attr.revealed ? attr.value : attr.type === "number" ? "???" : "????"}
-          </p>
-        </div>
-      ))}
+      {attributes.map((attr, index) => {
+        // Gestione esplicita del valore rivelato con controllo di tipo
+        const isRevealed = attr.revealed === true;
+        console.log(`Attributo ${attr.name}: revealed = ${isRevealed}`);
+        
+        return (
+          <div 
+            key={index}
+            className={cn(
+              "attribute-card border rounded-md p-3 text-center shadow-sm flex flex-col items-center transition-all duration-300",
+              isRevealed
+                ? "bg-white border-blue-300 shadow-md" 
+                : "bg-gray-50 border-gray-200"
+            )}
+            // Aggiungiamo un attributo data-revealed per facilitare il debug
+            data-revealed={isRevealed ? "true" : "false"}
+            data-name={attr.name}
+          >
+            {attributeIcons[attr.name] || <BookType className="h-5 w-5 text-slate-400" />}
+            <p className="text-xs text-slate-500 mb-1">{attr.name}</p>
+            <p className={cn(
+              "font-mono text-sm font-medium",
+              isRevealed ? "text-blue-600 font-bold" : "text-gray-400"
+            )}>
+              {isRevealed ? attr.value : attr.type === "number" ? "???" : "????"}
+            </p>
+          </div>
+        );
+      })}
     </div>
   );
 }

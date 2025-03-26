@@ -342,7 +342,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       gameState.guesses.push(guessResult);
       
       // Reveal one attribute
+      console.log("Stato attributi prima della rivelazione:", gameState.revealedAttributes);
+      
       const unrevealed = gameState.revealedAttributes.filter((attr: { revealed: boolean }) => !attr.revealed);
+      console.log(`Attributi da rivelare: ${unrevealed.length}`);
+      
       if (unrevealed.length > 0) {
         // Reveal attributes in a specific order
         const orderPriority = [
@@ -356,6 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const attr = unrevealed.find((a: { name: string }) => a.name === attrName);
           if (attr) {
             nextToReveal = attr;
+            console.log(`Prossimo attributo da rivelare: ${attrName}`);
             break;
           }
         }
@@ -363,6 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If no prioritized attribute found, just take the first unrevealed
         if (!nextToReveal && unrevealed.length > 0) {
           nextToReveal = unrevealed[0];
+          console.log(`Nessun attributo in ordine di priorità trovato, rivelando: ${nextToReveal?.name}`);
         }
         
         if (nextToReveal) {
@@ -370,9 +376,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             (attr: { name: string }) => attr.name === nextToReveal?.name
           );
           if (index !== -1) {
+            console.log(`Rivelando attributo all'indice ${index}: ${gameState.revealedAttributes[index].name}`);
             gameState.revealedAttributes[index].revealed = true;
           }
         }
+        
+        console.log("Stato attributi dopo la rivelazione:", gameState.revealedAttributes);
       }
       
       // Check if game is over
