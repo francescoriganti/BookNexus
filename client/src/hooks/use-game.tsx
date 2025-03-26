@@ -47,7 +47,8 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   // Fetch game state
   const { 
     data: gameState, 
-    isLoading 
+    isLoading,
+    refetch: refetchGameState
   } = useQuery<GameState>({
     queryKey: ['/api/game'],
     refetchOnWindowFocus: false,
@@ -99,6 +100,14 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
           });
         }
         
+        // Salva lo stato del gioco nel localStorage per poterlo utilizzare nell'interfaccia
+        try {
+          localStorage.setItem('gameState', JSON.stringify(data.gameState));
+          console.log("Stato del gioco salvato in localStorage");
+        } catch (e) {
+          console.error("Errore nel salvataggio in localStorage:", e);
+        }
+        
         // ✓ CORREZIONE FONDAMENTALE: Forza il refresh della query per causare un
         // nuovo rendering dell'interfaccia utente con i nuovi dati
         queryClient.invalidateQueries({ queryKey: ['/api/game'] });
@@ -106,6 +115,11 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
         // Imposta i dati direttamente nella cache per evitare un flash dell'interfaccia
         setTimeout(() => {
           queryClient.setQueryData(['/api/game'], data.gameState);
+          
+          // Forza un secondo refresh dopo un breve delay
+          setTimeout(() => {
+            refetchGameState();
+          }, 200);
         }, 50);
         
         // Informazioni di debug sul rendering dell'interfaccia

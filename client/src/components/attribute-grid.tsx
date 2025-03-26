@@ -18,7 +18,7 @@ const attributeIcons: Record<string, React.ReactNode> = {
 };
 
 export default function AttributeGrid({ attributes }: AttributeGridProps) {
-  // Aggiunta di più log per il debug
+  // Log per debug
   console.log("Rendering attribute grid with:", JSON.stringify(attributes));
   
   // Log degli attributi rivelati
@@ -30,6 +30,24 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
     console.warn("Attributi mancanti o non validi:", attributes);
     return <div className="text-center">Caricamento attributi...</div>;
   }
+
+  // Ottieni lo stato corrente del gioco dal localStorage, se disponibile
+  const getLatestGuess = () => {
+    try {
+      const gameStateRaw = localStorage.getItem('gameState');
+      if (gameStateRaw) {
+        const gameState = JSON.parse(gameStateRaw);
+        if (gameState.guesses && gameState.guesses.length > 0) {
+          return gameState.guesses[gameState.guesses.length - 1];
+        }
+      }
+    } catch (e) {
+      console.error("Errore nell'accesso al localStorage:", e);
+    }
+    return null;
+  };
+
+  const latestGuess = getLatestGuess();
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -47,7 +65,6 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
                 ? "bg-white border-blue-300 shadow-md" 
                 : "bg-gray-50 border-gray-200"
             )}
-            // Aggiungiamo un attributo data-revealed per facilitare il debug
             data-revealed={isRevealed ? "true" : "false"}
             data-name={attr.name}
           >

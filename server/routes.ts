@@ -341,48 +341,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       gameState.remainingAttempts--;
       gameState.guesses.push(guessResult);
       
-      // Reveal one attribute
-      console.log("Stato attributi prima della rivelazione:", gameState.revealedAttributes);
+      // NUOVA LOGICA: Rivela gli attributi che corrispondono
+      console.log("Stato attributi prima dell'aggiornamento:", gameState.revealedAttributes);
       
-      const unrevealed = gameState.revealedAttributes.filter((attr: { revealed: boolean }) => !attr.revealed);
-      console.log(`Attributi da rivelare: ${unrevealed.length}`);
+      // Otteniamo l'ultimo tentativo per vedere quali attributi corrispondono
+      const latestGuess = guessResult;
       
-      if (unrevealed.length > 0) {
-        // Reveal attributes in a specific order
-        const orderPriority = [
-          "Publication Year", "Genre", "Pages", "Author's Country", 
-          "Original Language", "Historical Period", "Author"
-        ];
-        
-        // Find the next attribute to reveal
-        let nextToReveal = null;
-        for (const attrName of orderPriority) {
-          const attr = unrevealed.find((a: { name: string }) => a.name === attrName);
-          if (attr) {
-            nextToReveal = attr;
-            console.log(`Prossimo attributo da rivelare: ${attrName}`);
-            break;
+      // Rivela gli attributi in base alla corrispondenza
+      if (gameState.revealedAttributes && latestGuess) {
+        gameState.revealedAttributes.forEach((attr: any, index: number) => {
+          // Mappa il nome dell'attributo al campo corrispondente in guessResult
+          let matchStatus: "correct" | "partial" | "incorrect" | null = null;
+          
+          if (attr.name === "Publication Year") {
+            matchStatus = latestGuess.attributes.publicationYear.status;
+          } else if (attr.name === "Genre") {
+            matchStatus = latestGuess.attributes.genre.status;
+          } else if (attr.name === "Author's Country") {
+            matchStatus = latestGuess.attributes.authorsCountry.status;
+          } else if (attr.name === "Pages") {
+            matchStatus = latestGuess.attributes.pages.status;
+          } else if (attr.name === "Author") {
+            matchStatus = latestGuess.attributes.author.status;
+          } else if (attr.name === "Original Language") {
+            matchStatus = latestGuess.attributes.originalLanguage.status;
+          } else if (attr.name === "Historical Period") {
+            matchStatus = latestGuess.attributes.historicalPeriod.status;
           }
-        }
-        
-        // If no prioritized attribute found, just take the first unrevealed
-        if (!nextToReveal && unrevealed.length > 0) {
-          nextToReveal = unrevealed[0];
-          console.log(`Nessun attributo in ordine di priorità trovato, rivelando: ${nextToReveal?.name}`);
-        }
-        
-        if (nextToReveal) {
-          const index = gameState.revealedAttributes.findIndex(
-            (attr: { name: string }) => attr.name === nextToReveal?.name
-          );
-          if (index !== -1) {
-            console.log(`Rivelando attributo all'indice ${index}: ${gameState.revealedAttributes[index].name}`);
+          
+          // Se l'attributo è corretto o parzialmente corretto, rivelalo
+          if (matchStatus === "correct") {
             gameState.revealedAttributes[index].revealed = true;
+            console.log(`Rivelato attributo ${attr.name} perché corrisponde esattamente`);
           }
-        }
-        
-        console.log("Stato attributi dopo la rivelazione:", gameState.revealedAttributes);
+        });
       }
+      
+      console.log("Stato attributi dopo l'aggiornamento:", gameState.revealedAttributes);
       
       // Check if game is over
       if (guessResult.isCorrect) {
@@ -407,9 +402,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Return the guess result and updated game state (without dailyBookId)
-      const { dailyBookId, ...safeGameState } = gameState;
-      res.json({ guessResult, gameState: safeGameState });
+      // Facciamo una copia profonda per garantire che non ci siano riferimenti condivisi
+      const { dailyBookId, ...safeGameState } = JSON.parse(JSON.stringify(gameState));
+      
+      console.log('Inviando risposta al client:', {
+        guessResult: JSON.stringify(guessResult),
+        gameState: JSON.stringify(safeGameState)
+      });
+      
+      // Forza un ritardo minimo per garantire che il frontend abbia tempo di aggiornare lo stato
+      setTimeout(() => {
+        res.json({ guessResult, gameState: safeGameState });
+      }, 100);
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }
