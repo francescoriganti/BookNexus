@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { supabaseStorage } from "./supabase-storage";
+import { postgresStorage } from "./postgres-storage";
 import { z } from "zod";
 import { insertBookSchema } from "@shared/schema";
 import { log } from "./vite";
@@ -131,11 +132,28 @@ class FallbackStorage implements IStorage {
 
 // Determine which storage to use
 let activeStorage: IStorage;
-if (process.env.SUPABASE_KEY) {
-  log('Using Supabase storage with fallback to in-memory storage');
-  activeStorage = new FallbackStorage(supabaseStorage, storage);
-} else {
-  log('Using in-memory storage only');
+
+// Check if we have PostgreSQL database environment variables
+const hasPostgresEnv = process.env.DATABASE_URL || 
+                     (process.env.PGHOST && process.env.PGPORT && 
+                      process.env.PGUSER && process.env.PGPASSWORD && 
+                      process.env.PGDATABASE);
+
+try {
+  if (hasPostgresEnv) {
+    // Use PostgreSQL with fallback to in-memory
+    log('Using PostgreSQL storage with fallback to in-memory storage');
+    activeStorage = new FallbackStorage(postgresStorage, storage);
+  } else if (process.env.SUPABASE_KEY) {
+    // Use Supabase with fallback to in-memory
+    log('Using Supabase storage with fallback to in-memory storage');
+    activeStorage = new FallbackStorage(supabaseStorage, storage);
+  } else {
+    log('No database configuration found. Using in-memory storage.');
+    activeStorage = storage;
+  }
+} catch (error) {
+  log(`Error initializing database storage: ${error}. Using in-memory storage.`);
   activeStorage = storage;
 }
 

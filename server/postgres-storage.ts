@@ -1,4 +1,5 @@
-import { Client } from 'pg';
+import pkg from 'pg';
+const { Client } = pkg;
 import { type IStorage } from './storage';
 import { 
   type Book, 
@@ -283,55 +284,55 @@ export class PostgresStorage implements IStorage {
       const dailyBook = await this.getDailyBook(date);
       
       // Initialize the game state
-      const initialAttributes = [
+      const initialAttributes: BookAttribute[] = [
         {
           name: "Publication Year",
           value: dailyBook.publicationYear,
           icon: "calendar",
           revealed: false,
-          type: "date"
+          type: "date" as const
         },
         {
           name: "Genre",
           value: dailyBook.genre,
           icon: "bookmark",
           revealed: false,
-          type: "text"
+          type: "text" as const
         },
         {
           name: "Author's Country",
           value: dailyBook.authorsCountry,
           icon: "globe",
           revealed: false,
-          type: "text"
+          type: "text" as const
         },
         {
           name: "Pages",
           value: dailyBook.pages,
           icon: "file-text",
           revealed: false,
-          type: "number"
+          type: "number" as const
         },
         {
           name: "Author",
           value: dailyBook.author,
           icon: "user",
           revealed: false,
-          type: "text"
+          type: "text" as const
         },
         {
           name: "Original Language",
           value: dailyBook.originalLanguage,
           icon: "message-square",
           revealed: false,
-          type: "text"
+          type: "text" as const
         },
         {
           name: "Historical Period",
           value: dailyBook.historicalPeriod,
           icon: "clock",
           revealed: false,
-          type: "text"
+          type: "text" as const
         }
       ];
       

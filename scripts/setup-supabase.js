@@ -2,7 +2,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Client } from 'pg';
+import pkg from 'pg';
+const { Client } = pkg;
 
 // Get directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
