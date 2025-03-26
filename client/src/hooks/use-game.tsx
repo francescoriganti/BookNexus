@@ -27,6 +27,7 @@ type GameContextType = {
   gameNumber: number;
   dailyBook: Book | null;
   hasUpdatedStats: boolean;
+  hasShownResultModal: boolean;
   updateStats: () => Promise<void>;
 };
 
@@ -38,6 +39,7 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { toast } = useToast();
   const [dailyBook, setDailyBook] = useState<Book | null>(null);
   const [hasUpdatedStats, setHasUpdatedStats] = useState(false);
+  const [hasShownResultModal, setHasShownResultModal] = useState(false);
   
   // Calculate a "game number" based on days since launch
   const launchDate = new Date('2023-01-01'); // Arbitrary launch date
@@ -55,14 +57,34 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     staleTime: 60000, // 1 minute
   });
   
-  // Check localStorage for a flag indicating if stats have been updated today
+  // Check localStorage for persisted game data
   useEffect(() => {
     const todayDateString = getTodayDateString();
     const statsUpdatedToday = localStorage.getItem(`statsUpdated_${todayDateString}`);
+    const resultModalShown = localStorage.getItem(`resultModalShown_${todayDateString}`);
+    const savedDailyBook = localStorage.getItem(`dailyBook_${todayDateString}`);
     
+    // Carica flag degli stats aggiornati
     if (statsUpdatedToday === 'true') {
       setHasUpdatedStats(true);
       console.log("Stats already updated today according to localStorage");
+    }
+    
+    // Carica flag del modal mostrato
+    if (resultModalShown === 'true') {
+      setHasShownResultModal(true);
+      console.log("Result modal already shown today according to localStorage");
+    }
+    
+    // Carica il libro del giorno se è stato già indovinato
+    if (savedDailyBook) {
+      try {
+        const parsedBook = JSON.parse(savedDailyBook);
+        setDailyBook(parsedBook);
+        console.log("Libro del giorno caricato dal localStorage:", parsedBook.title);
+      } catch (e) {
+        console.error("Errore nel parsing del libro dal localStorage:", e);
+      }
     }
   }, []);
   
@@ -149,8 +171,24 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (data.dailyBook) {
         setDailyBook(data.dailyBook);
         
-        // Show the result modal immediately
-        openGameResultModal();
+        // Salva il libro indovinato nel localStorage per la persistenza
+        const todayDateString = getTodayDateString();
+        try {
+          localStorage.setItem(`dailyBook_${todayDateString}`, JSON.stringify(data.dailyBook));
+          console.log("Libro del giorno salvato in localStorage:", data.dailyBook.title);
+        } catch (e) {
+          console.error("Errore nel salvataggio del libro nel localStorage:", e);
+        }
+        
+        // Apri il modale solo se non l'abbiamo già mostrato oggi
+        if (!hasShownResultModal) {
+          // Segna che abbiamo mostrato il modale per evitare di mostrarlo nuovamente al refresh
+          localStorage.setItem(`resultModalShown_${todayDateString}`, 'true');
+          setHasShownResultModal(true);
+          
+          // Show the result modal immediately
+          openGameResultModal();
+        }
         
         // Blocchiamo l'aggiornamento automatico delle statistiche qui per evitare loop
         // L'aggiornamento delle statistiche avverrà solo quando l'utente interagisce con il modale
@@ -210,7 +248,10 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   
   // Modal functions
   const openGameResultModal = () => {
-    document.getElementById("gameResultModal")?.click();
+    // Apri il modale solo se non l'abbiamo già mostrato oggi
+    if (!hasShownResultModal) {
+      document.getElementById("gameResultModal")?.click();
+    }
   };
   
   const openStatsModal = () => {
@@ -289,6 +330,7 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     gameNumber,
     dailyBook,
     hasUpdatedStats,
+    hasShownResultModal,
     updateStats
   };
   

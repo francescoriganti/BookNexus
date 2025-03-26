@@ -35,14 +35,30 @@ export default function GameResultModal({
   const [confettiShown, setConfettiShown] = useState(false);
   const dialogContentRef = useRef<HTMLDivElement>(null);
   
+  // Controllo per verificare se si tratta di un modale appena visualizzato al caricamento
+  const [hasHandledInitialState, setHasHandledInitialState] = useState(false);
+  
+  // Verificare se il localStorage ha una flag per indicare che abbiamo già mostrato questo modale
+  useEffect(() => {
+    const todayDateString = new Date().toISOString().split('T')[0];
+    const resultModalShownBefore = localStorage.getItem(`resultModalShown_${todayDateString}`);
+    
+    // Al caricamento, controlliamo se stiamo aprendo un modal che è stato già mostrato
+    if (resultModalShownBefore === 'true' && !hasHandledInitialState) {
+      setHasHandledInitialState(true);
+      // Non mostriamo confetti se il modale è solo un refresh di pagina
+      console.log("Il modale è stato già mostrato oggi, non mostrare confetti");
+    }
+  }, [hasHandledInitialState]);
+  
   // Effetto per aprire il modale quando cambia lo stato del gioco o quando viene cliccato il trigger
   useEffect(() => {
     // Aggiorniamo lo stato del modale in base allo stato del gioco
     if (gameStatus === "won" || gameStatus === "lost") {
       setOpen(true);
       
-      // Se ha vinto, mostra i confetti
-      if (gameStatus === "won" && !confettiShown) {
+      // Se ha vinto, mostra i confetti, ma solo se è la prima volta (non un refresh)
+      if (gameStatus === "won" && !confettiShown && !hasHandledInitialState) {
         setConfettiShown(true);
         
         // Funzione per lanciare i confetti
@@ -103,7 +119,7 @@ export default function GameResultModal({
     return () => {
       triggerEl?.removeEventListener("click", handleTriggerClick);
     };
-  }, [gameStatus, confettiShown]);
+  }, [gameStatus, confettiShown, hasHandledInitialState]);
   
   const isGameOver = gameStatus === "won" || gameStatus === "lost";
   
