@@ -33,12 +33,8 @@ export default function GameBoard() {
     }
   };
   
-  // Update stats if game is over and stats haven't been updated yet
-  useEffect(() => {
-    if (gameState && gameState.gameStatus !== "active" && !hasUpdatedStats) {
-      updateStats();
-    }
-  }, [gameState, hasUpdatedStats, updateStats]);
+  // Rimuoviamo l'effetto automatico per aggiornare le statistiche
+  // L'aggiornamento avverrà solo quando viene fatto un tentativo di indovinare
 
   if (isLoading) {
     return (

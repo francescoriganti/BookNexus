@@ -30,6 +30,9 @@ export default function GameResultModal({
   const { toast } = useToast();
   // Importante: Non aggiornare le statistiche qui per evitare loop infiniti
   
+  // Usa useEffect con array di dipendenze vuoto per garantire che il codice venga eseguito solo una volta
+  // Questo aiuta a prevenire aggiornamenti ripetuti che causano il Maximum update depth exceeded
+  
   const isGameOver = gameStatus === "won" || gameStatus === "lost";
   
   // Copy result to clipboard
@@ -128,7 +131,12 @@ export default function GameResultModal({
         </div>
         
         <DialogFooter className="sm:justify-end">
-          <Button type="button" variant="outline">
+          <Button type="button" variant="outline" onClick={() => {
+            // Quando l'utente chiude il modale, possiamo aggiornare le statistiche in modo sicuro
+            // Questo aggiornamento avviene solo in risposta all'interazione dell'utente
+            const event = new CustomEvent('updateGameStats');
+            window.dispatchEvent(event);
+          }}>
             Close
           </Button>
         </DialogFooter>

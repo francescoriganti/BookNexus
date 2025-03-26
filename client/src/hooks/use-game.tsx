@@ -44,17 +44,6 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const today = new Date();
   const gameNumber = Math.floor((today.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Check localStorage for a flag indicating if stats have been updated today
-  useEffect(() => {
-    const todayDateString = getTodayDateString();
-    const statsUpdatedToday = localStorage.getItem(`statsUpdated_${todayDateString}`);
-    
-    if (statsUpdatedToday === 'true') {
-      setHasUpdatedStats(true);
-      console.log("Stats already updated today according to localStorage");
-    }
-  }, []);
-  
   // Fetch game state
   const { 
     data: gameState, 
@@ -65,6 +54,17 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     refetchOnWindowFocus: false,
     staleTime: 60000, // 1 minute
   });
+  
+  // Check localStorage for a flag indicating if stats have been updated today
+  useEffect(() => {
+    const todayDateString = getTodayDateString();
+    const statsUpdatedToday = localStorage.getItem(`statsUpdated_${todayDateString}`);
+    
+    if (statsUpdatedToday === 'true') {
+      setHasUpdatedStats(true);
+      console.log("Stats already updated today according to localStorage");
+    }
+  }, []);
   
   // Fetch stats
   const { 
@@ -140,14 +140,11 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (data.dailyBook) {
         setDailyBook(data.dailyBook);
         
-        // If game is over and stats haven't been updated yet
-        if (!hasUpdatedStats && gameState && (gameState.gameStatus === "won" || gameState.gameStatus === "lost")) {
-          // Update stats only once
-          updateStats();
-        }
-        
-        // Show the result modal
+        // Show the result modal immediately
         openGameResultModal();
+        
+        // Blocchiamo l'aggiornamento automatico delle statistiche qui per evitare loop
+        // L'aggiornamento delle statistiche avverrà solo quando l'utente interagisce con il modale
       }
     },
     onError: (error) => {
@@ -164,12 +161,25 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     mutate: updateStatsMutation,
   } = useMutation({
     mutationFn: async () => {
-      if (!gameState || gameState.gameStatus === "active" || hasUpdatedStats) return;
+      if (!gameState || gameState.gameStatus === "active") return;
+      
+      // Controllo cruciale: evita aggiornamenti ripetuti
+      if (hasUpdatedStats) {
+        console.log("Aggiornamento statistiche già effettuato, esco");
+        return null;
+      }
+      
+      // Blocca ulteriori tentativi immediatamente
+      setHasUpdatedStats(true);
+      
+      // Salva in localStorage per prevenire aggiornamenti futuri
+      const todayDateString = getTodayDateString();
+      localStorage.setItem(`statsUpdated_${todayDateString}`, 'true');
+      
+      console.log("Updating stats for the first time");
       
       const won = gameState.gameStatus === "won";
       const attempts = 8 - gameState.remainingAttempts;
-      
-      console.log("Updating stats for the first time");
       
       const response = await apiRequest('POST', '/api/stats/update', { 
         won, 
@@ -180,7 +190,6 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     onSuccess: (data) => {
       if (data) {
         queryClient.setQueryData(['/api/stats'], data);
-        setHasUpdatedStats(true);
         console.log("Stats updated successfully, hasUpdatedStats set to true");
       }
     }
@@ -234,6 +243,24 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       updateStatsMutation();
     }
   };
+  
+  // Add listener for updateGameStats event
+  useEffect(() => {
+    // Aggiungiamo un event listener per gestire l'aggiornamento delle statistiche
+    // quando l'utente chiude il modale di risultato
+    const handleUpdateStats = () => {
+      if (!hasUpdatedStats && gameState && (gameState.gameStatus === "won" || gameState.gameStatus === "lost")) {
+        console.log("Aggiornamento statistiche da evento utente");
+        updateStats();
+      }
+    };
+    
+    window.addEventListener('updateGameStats', handleUpdateStats);
+    
+    return () => {
+      window.removeEventListener('updateGameStats', handleUpdateStats);
+    };
+  }, [hasUpdatedStats, gameState, updateStats]);
   
   // Value for the context
   const value: GameContextType = {
