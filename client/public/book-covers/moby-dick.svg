@@ -1,0 +1,28 @@
+<svg width="210" height="297" viewBox="0 0 210 297" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background color -->
+  <rect width="210" height="297" fill="#0277BD"/>
+  
+  <!-- Book spine shadow -->
+  <rect x="0" y="0" width="20" height="297" fill="#01579B"/>
+  
+  <!-- Ocean wave pattern -->
+  <path d="M30 100 Q60 80, 90 100 Q120 120, 150 100 Q180 80, 210 100" stroke="#FFFFFF" stroke-width="3" fill="none"/>
+  <path d="M30 120 Q60 100, 90 120 Q120 140, 150 120 Q180 100, 210 120" stroke="#FFFFFF" stroke-width="3" fill="none"/>
+  <path d="M30 140 Q60 120, 90 140 Q120 160, 150 140 Q180 120, 210 140" stroke="#FFFFFF" stroke-width="3" fill="none"/>
+  
+  <!-- Whale silhouette -->
+  <path d="M150 70 C130 50, 100 60, 80 70 C60 80, 50 80, 40 70 C60 90, 70 85, 80 90 C100 100, 130 90, 150 70Z" fill="#E1F5FE"/>
+  <circle cx="140" cy="65" r="3" fill="#01579B"/> <!-- Eye -->
+  
+  <!-- Water spout -->
+  <path d="M100 50 Q90 30, 100 10 Q110 30, 100 50" fill="#E1F5FE"/>
+  
+  <!-- Title area -->
+  <rect x="30" y="190" width="150" height="90" rx="5" fill="#FFFFFF"/>
+  
+  <!-- Title text -->
+  <text x="105" y="225" font-family="serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#01579B">Moby-Dick</text>
+  
+  <!-- Author name -->
+  <text x="105" y="255" font-family="serif" font-size="14" text-anchor="middle" fill="#01579B">Herman Melville</text>
+</svg>

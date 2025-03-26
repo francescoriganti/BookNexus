@@ -1,0 +1,25 @@
+<svg width="210" height="297" viewBox="0 0 210 297" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background color -->
+  <rect width="210" height="297" fill="#263238"/>
+  
+  <!-- Book spine shadow -->
+  <rect x="0" y="0" width="20" height="297" fill="#000A12"/>
+  
+  <!-- Decorative elements -->
+  <rect x="40" y="40" width="130" height="160" rx="5" fill="#4F5B62"/>
+  
+  <!-- Axe symbol -->
+  <path d="M105 70 L105 160" stroke="#ECEFF1" stroke-width="4"/>
+  <path d="M85 85 L125 85" stroke="#ECEFF1" stroke-width="4"/>
+  <path d="M85 85 L125 115" stroke="#ECEFF1" stroke-width="4"/>
+  
+  <!-- Title area -->
+  <rect x="30" y="210" width="150" height="70" rx="5" fill="#ECEFF1"/>
+  
+  <!-- Title text -->
+  <text x="105" y="235" font-family="serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#263238">Crime and</text>
+  <text x="105" y="255" font-family="serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#263238">Punishment</text>
+  
+  <!-- Author name -->
+  <text x="105" y="275" font-family="serif" font-size="12" text-anchor="middle" fill="#263238">Fyodor Dostoevsky</text>
+</svg>
