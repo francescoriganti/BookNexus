@@ -6,6 +6,7 @@ import { useIncognitoDetection } from "@/hooks/use-incognito";
 
 export default function Header() {
   const { openHowToPlayModal, openStatsModal } = useGame();
+  const { isIncognito, isChecking } = useIncognitoDetection();
 
   return (
     <header className="bg-white shadow-md">
@@ -16,6 +17,12 @@ export default function Header() {
             <h1 className="font-serif text-2xl font-bold tracking-tight text-slate-900 bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
               Bookaneer
             </h1>
+            {isIncognito && !isChecking && (
+              <div className="ml-2 flex items-center text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                <Ghost className="h-3 w-3 mr-1" />
+                <span>Modalità anonima</span>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center">
