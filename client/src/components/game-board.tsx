@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import CountdownTimer from "@/components/countdown-timer";
 import BookSearch from "@/components/book-search";
 import AttributeGrid from "@/components/attribute-grid";
 import PreviousGuesses from "@/components/previous-guesses";
@@ -87,13 +86,7 @@ export default function GameBoard() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
-      {/* Timer */}
-      <div className="mb-6 text-center">
-        <p className="text-sm text-slate-500 mb-1">Next book in</p>
-        <CountdownTimer />
-      </div>
-
+    <main className="max-w-2xl mx-auto px-4 py-6">
       {/* Game Board */}
       <Card className="mb-8 game-container">
         <CardContent className="p-6">
