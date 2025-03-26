@@ -41,17 +41,31 @@ export class PostgresStorage implements IStorage {
       }
     });
     
-    // Connect to database
-    this.connect();
+    // We'll connect lazily on first query
   }
   
   private async connect() {
+    if (this.connected) {
+      return; // Already connected
+    }
+    
     try {
       await this.client.connect();
       this.connected = true;
       log('Connected to PostgreSQL database', 'postgres');
     } catch (error) {
       log(`Failed to connect to PostgreSQL database: ${error}`, 'postgres');
+      
+      // If the client is already connected, create a new client for the next attempt
+      if (error.message && error.message.includes('already been connected')) {
+        this.client = new Client({
+          connectionString: DATABASE_URL,
+          ssl: {
+            rejectUnauthorized: false
+          }
+        });
+      }
+      
       throw new Error(`Failed to connect to PostgreSQL database: ${error}`);
     }
   }
@@ -65,6 +79,25 @@ export class PostgresStorage implements IStorage {
       return await this.client.query(text, params);
     } catch (error) {
       log(`Query error: ${error}`, 'postgres');
+      
+      // If connection was lost, try to reconnect
+      if (error.code === '57P01' || error.code === '08006' || 
+          error.code === '08003' || error.code === '08000') {
+        log('Lost connection to PostgreSQL, creating new client...', 'postgres');
+        
+        this.connected = false;
+        this.client = new Client({
+          connectionString: DATABASE_URL,
+          ssl: {
+            rejectUnauthorized: false
+          }
+        });
+        
+        // Try to connect and run the query again
+        await this.connect();
+        return await this.client.query(text, params);
+      }
+      
       throw error;
     }
   }
