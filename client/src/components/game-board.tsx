@@ -21,9 +21,28 @@ export default function GameBoard() {
     stats,
     gameNumber,
     hasUpdatedStats,
+    hasShownResultModal,
     updateStats
   } = useGame();
   const [bookTitle, setBookTitle] = useState("");
+  
+  // Non mostrare il modale di vittoria se il gioco è stato caricato da localStorage
+  useEffect(() => {
+    const todayDateString = new Date().toISOString().split('T')[0];
+    const resultModalShownBefore = localStorage.getItem(`resultModalShown_${todayDateString}`);
+    
+    // Forza la chiusura di qualsiasi modale aperto al refresh se è già stato mostrato
+    if (resultModalShownBefore === 'true') {
+      setTimeout(() => {
+        const closeButtons = document.querySelectorAll("[data-state='open'] button[type='button']");
+        closeButtons.forEach((button: any) => {
+          if (button.textContent === 'Close') {
+            button.click();
+          }
+        });
+      }, 100);
+    }
+  }, []);
   
   // Handle guess submission
   const handleSubmitGuess = () => {

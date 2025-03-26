@@ -48,6 +48,10 @@ export default function GameResultModal({
       setHasHandledInitialState(true);
       // Non mostriamo confetti se il modale è solo un refresh di pagina
       console.log("Il modale è stato già mostrato oggi, non mostrare confetti");
+      
+      // Importante: se stiamo aprendo il modale a causa di un refresh, chiudiamolo immediatamente
+      // per evitare di mostrare il popup vuoto
+      setOpen(false);
     }
   }, [hasHandledInitialState]);
   
@@ -190,60 +194,139 @@ export default function GameResultModal({
               : "You ran out of attempts. The correct book was:"}
           </p>
           
-          <motion.div 
-            className="flex flex-col items-center mb-6 py-4 px-6 bg-slate-50 rounded-lg"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ 
-              type: "spring",
-              stiffness: 400,
-              damping: 17,
-              delay: 0.1
-            }}
-          >
-            {dailyBook?.imageUrl && (
-              <motion.div 
-                className="mb-4 w-24 h-36 overflow-hidden rounded-md shadow-sm"
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <motion.img 
-                  src={dailyBook.imageUrl} 
-                  alt={`Cover of ${dailyBook.title}`} 
-                  className="w-full h-full object-cover"
-                  initial={{ scale: 1.2 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.4, duration: 0.5 }}
-                />
-              </motion.div>
-            )}
-            <motion.span 
-              className="font-serif text-xl font-semibold mb-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-            >
-              {dailyBook?.title || "—"}
-            </motion.span>
-            <motion.span 
-              className="text-slate-500 mb-1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.3 }}
-            >
-              by {dailyBook?.author || "—"}
-            </motion.span>
+          {dailyBook ? (
             <motion.div 
-              className="flex items-center text-slate-500 text-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.3 }}
+              className="flex flex-col items-center mb-6 py-4 px-6 bg-slate-50 rounded-lg"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 400,
+                damping: 17,
+                delay: 0.1
+              }}
             >
-              <Calendar className="h-4 w-4 mr-1" />
-              <span>{dailyBook?.publicationYear || "—"}</span>
+              {dailyBook?.imageUrl && (
+                <motion.div 
+                  className="mb-4 w-24 h-36 overflow-hidden rounded-md shadow-sm"
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <motion.img 
+                    src={dailyBook.imageUrl} 
+                    alt={`Cover of ${dailyBook.title}`} 
+                    className="w-full h-full object-cover"
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                  />
+                </motion.div>
+              )}
+              <motion.span 
+                className="font-serif text-xl font-semibold mb-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+              >
+                {dailyBook?.title || "—"}
+              </motion.span>
+              <motion.span 
+                className="text-slate-500 mb-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.3 }}
+              >
+                by {dailyBook?.author || "—"}
+              </motion.span>
+              <motion.div 
+                className="flex items-center text-slate-500 text-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.3 }}
+              >
+                <Calendar className="h-4 w-4 mr-1" />
+                <span>{dailyBook?.publicationYear || "—"}</span>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          ) : (
+            // Se non abbiamo i dati del libro, tentiamo di recuperarli dal localStorage
+            (() => {
+              try {
+                const todayDateString = new Date().toISOString().split('T')[0];
+                const savedDailyBookData = localStorage.getItem(`dailyBook_${todayDateString}`);
+                const savedDailyBook = savedDailyBookData ? JSON.parse(savedDailyBookData) : null;
+                
+                // Se abbiamo trovato i dati nel localStorage, mostra il libro da lì
+                if (savedDailyBook) {
+                  return (
+                    <motion.div 
+                      className="flex flex-col items-center mb-6 py-4 px-6 bg-slate-50 rounded-lg"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ 
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 17,
+                        delay: 0.1
+                      }}
+                    >
+                      {savedDailyBook?.imageUrl && (
+                        <motion.div 
+                          className="mb-4 w-24 h-36 overflow-hidden rounded-md shadow-sm"
+                          initial={{ y: -20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.3, duration: 0.5 }}
+                        >
+                          <motion.img 
+                            src={savedDailyBook.imageUrl} 
+                            alt={`Cover of ${savedDailyBook.title}`} 
+                            className="w-full h-full object-cover"
+                            initial={{ scale: 1.2 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.4, duration: 0.5 }}
+                          />
+                        </motion.div>
+                      )}
+                      <motion.span 
+                        className="font-serif text-xl font-semibold mb-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5, duration: 0.3 }}
+                      >
+                        {savedDailyBook?.title || "—"}
+                      </motion.span>
+                      <motion.span 
+                        className="text-slate-500 mb-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6, duration: 0.3 }}
+                      >
+                        by {savedDailyBook?.author || "—"}
+                      </motion.span>
+                      <motion.div 
+                        className="flex items-center text-slate-500 text-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7, duration: 0.3 }}
+                      >
+                        <Calendar className="h-4 w-4 mr-1" />
+                        <span>{savedDailyBook?.publicationYear || "—"}</span>
+                      </motion.div>
+                    </motion.div>
+                  );
+                } else {
+                  // Chiudiamo il modale se non abbiamo dati
+                  setTimeout(() => setOpen(false), 100);
+                  return null;
+                }
+              } catch (e) {
+                console.error("Errore nel recupero del libro dal localStorage:", e);
+                setTimeout(() => setOpen(false), 100);
+                return null;
+              }
+            })()
+          )}
           
           <div className="mb-6">
             <p className="text-sm text-slate-500 mb-2">Share your result</p>
