@@ -280,6 +280,12 @@ export class PostgresStorage implements IStorage {
   
   async createGameState(date: string): Promise<GameState> {
     try {
+      // Check if the game state already exists for today
+      const existingGameState = await this.getGameState(date);
+      if (existingGameState) {
+        return existingGameState;
+      }
+
       // Get the daily book for this date
       const dailyBook = await this.getDailyBook(date);
       
@@ -346,19 +352,35 @@ export class PostgresStorage implements IStorage {
         gameStatus: "active"
       };
       
-      // Save to database
-      await this.query(
-        'INSERT INTO game_states (id, date, daily_book_id, remaining_attempts, guesses, revealed_attributes, game_status) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [
-          gameState.id,
-          gameState.date,
-          gameState.dailyBookId,
-          gameState.remainingAttempts,
-          JSON.stringify(gameState.guesses),
-          JSON.stringify(gameState.revealedAttributes),
-          gameState.gameStatus
-        ]
-      );
+      try {
+        // Try to insert with ON CONFLICT DO NOTHING to handle race conditions
+        await this.query(
+          'INSERT INTO game_states (id, date, daily_book_id, remaining_attempts, guesses, revealed_attributes, game_status) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING',
+          [
+            gameState.id,
+            gameState.date,
+            gameState.dailyBookId,
+            gameState.remainingAttempts,
+            JSON.stringify(gameState.guesses),
+            JSON.stringify(gameState.revealedAttributes),
+            gameState.gameStatus
+          ]
+        );
+        
+        // Check if the insert was successful by getting the state again
+        const insertedState = await this.getGameState(date);
+        if (insertedState) {
+          return insertedState;
+        }
+      } catch (insertError) {
+        // If insert fails, try to get the existing game state one more time
+        const existingAfterError = await this.getGameState(date);
+        if (existingAfterError) {
+          return existingAfterError;
+        }
+        // If still no game state, log and rethrow the error
+        throw insertError;
+      }
       
       return gameState;
     } catch (error) {
