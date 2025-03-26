@@ -1,6 +1,7 @@
 import { Calendar, BookType, Globe, BookOpen, User, Languages, History } from "lucide-react";
 import { type BookAttribute } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 type AttributeGridProps = {
   attributes: BookAttribute[];
@@ -111,10 +112,10 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
           : "";
         
         return (
-          <div 
+          <motion.div 
             key={index}
             className={cn(
-              "attribute-card border rounded-md p-3 text-center shadow-sm flex flex-col items-center transition-all duration-300",
+              "attribute-card border rounded-md p-3 text-center shadow-sm flex flex-col items-center",
               isRevealed
                 ? cn("shadow-md", statusClass)
                 : "bg-gray-50 border-gray-200"
@@ -122,22 +123,72 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
             data-revealed={isRevealed ? "true" : "false"}
             data-name={attr.name}
             data-status={status || "none"}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            initial={isRevealed ? { scale: 0.8, opacity: 0 } : {}}
+            animate={isRevealed ? { 
+              scale: 1, 
+              opacity: 1,
+              transition: { 
+                type: "spring", 
+                stiffness: 400, 
+                damping: 10, 
+                duration: 0.4 
+              }
+            } : {}}
           >
-            {attributeIcons[attr.name] || <BookType className="h-5 w-5 text-slate-400" />}
+            <motion.div 
+              className="mb-1"
+              initial={isRevealed ? { rotateY: 180, opacity: 0 } : {}}
+              animate={isRevealed ? { rotateY: 0, opacity: 1 } : {}}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
+              {attributeIcons[attr.name] || <BookType className="h-5 w-5 text-slate-400" />}
+            </motion.div>
             <p className="text-xs text-slate-500 mb-1">{attr.name}</p>
-            <p className={cn(
-              "font-mono text-sm font-medium",
-              isRevealed 
-                ? status === "correct" 
-                  ? "text-green-600 font-bold" 
-                  : status === "partial" 
-                    ? "text-amber-600 font-bold" 
-                    : "text-blue-600 font-bold" 
-                : "text-gray-400"
-            )}>
+            <motion.p 
+              className={cn(
+                "font-mono text-sm font-medium",
+                isRevealed 
+                  ? status === "correct" 
+                    ? "text-green-600 font-bold" 
+                    : status === "partial" 
+                      ? "text-amber-600 font-bold" 
+                      : "text-blue-600 font-bold" 
+                  : "text-gray-400"
+              )}
+              initial={isRevealed ? { opacity: 0, y: 10 } : {}}
+              animate={isRevealed ? { 
+                opacity: 1, 
+                y: 0,
+                transition: { 
+                  delay: 0.2,
+                  duration: 0.3 
+                }
+              } : {}}
+            >
               {isRevealed ? attr.value : attr.type === "number" ? "???" : "????"}
-            </p>
-          </div>
+            </motion.p>
+            {status === "correct" && isRevealed && (
+              <motion.div
+                className="absolute inset-0 rounded-md"
+                initial={{ opacity: 0 }}
+                animate={{ 
+                  opacity: [0, 0.15, 0], 
+                  scale: [1, 1.05, 1] 
+                }}
+                transition={{ 
+                  duration: 1.5, 
+                  repeat: Infinity, 
+                  repeatType: "reverse" 
+                }}
+                style={{ 
+                  background: "radial-gradient(circle, rgba(34,197,94,0.3) 0%, rgba(255,255,255,0) 70%)",
+                  zIndex: -1 
+                }}
+              />
+            )}
+          </motion.div>
         );
       })}
     </div>
