@@ -19,6 +19,9 @@ app.use(express.urlencoded({ extended: false }));
 // Serve la cartella book-covers direttamente
 app.use('/book-covers', express.static(path.join(__dirname, '..', 'public', 'book-covers')));
 
+// Serve la cartella images direttamente
+app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

@@ -14,11 +14,8 @@ export default function Header() {
             <img 
               src="/images/logo_bookle.png" 
               alt="Bookle Logo" 
-              className="h-8 mr-2" 
+              className="h-10" 
             />
-            <h1 className="font-serif text-2xl font-bold tracking-tight text-slate-900">
-              Bookle
-            </h1>
           </div>
           
           <div className="flex items-center">
