@@ -9,7 +9,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center">
-            <img src="/logo_booklet_def.png" alt="Bookle Logo" className="h-8 w-auto" />
+            <img src="/logo_booklet_def.svg" alt="Bookle Logo" className="h-10 w-auto" />
           </div>
           
           <nav className="flex space-x-4">
