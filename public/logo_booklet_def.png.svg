@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-weight: bold;
+      font-size: 36px;
+      fill: url(#text-gradient);
+    }
+    .book-icon {
+      fill: #2563eb;
+    }
+  </style>
+  <defs>
+    <linearGradient id="text-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Book icon -->
+  <g class="book-icon" transform="translate(10, 10) scale(1.2)">
+    <path d="M26.67,0H6.67c-2.2,0-4,1.8-4,4v32c0,2.2,1.8,4,4,4h20c1.47,0,2.67-1.2,2.67-2.67V2.67C29.33,1.2,28.13,0,26.67,0z M26.67,25.33c0,0.73-0.6,1.33-1.33,1.33h-16C8.6,26.67,8,26.07,8,25.33c0-0.73,0.6-1.33,1.33-1.33h16c0.73,0,1.33,0.6,1.33,1.33z M26.67,18.67c0,0.73-0.6,1.33-1.33,1.33h-16C8.6,20,8,19.4,8,18.67C8,17.93,8.6,17.33,9.33,17.33h16c0.73,0,1.33,0.6,1.33,1.33z M26.67,12c0,0.73-0.6,1.33-1.33,1.33h-16C8.6,13.33,8,12.73,8,12c0-0.73,0.6-1.33,1.33-1.33h16c0.73,0,1.33,0.6,1.33,1.33z" />
+  </g>
+  
+  <!-- Text "Bookle" -->
+  <text x="50" y="40" class="logo-text">Bookle</text>
+</svg>

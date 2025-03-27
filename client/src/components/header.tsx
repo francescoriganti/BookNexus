@@ -1,4 +1,3 @@
-import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/hooks/use-game";
 
@@ -10,10 +9,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center">
-            <BookOpen className="text-blue-600 mr-2 h-6 w-6" />
-            <h1 className="font-serif text-2xl font-bold tracking-tight text-slate-900 bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
-              Bookaneer
-            </h1>
+            <img src="/logo_booklet_def.png" alt="Bookle Logo" className="h-8 w-auto" />
           </div>
           
           <nav className="flex space-x-4">

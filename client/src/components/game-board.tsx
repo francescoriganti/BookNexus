@@ -97,7 +97,7 @@ export default function GameBoard() {
 
           {/* Submit Button */}
           <Button
-            className="w-full mb-6" 
+            className={`w-full mb-6 ${(gameState?.gameStatus !== "active" || isPending || !bookTitle.trim()) ? "bg-[#11a856] hover:bg-[#11a856] opacity-100" : ""}`} 
             onClick={handleSubmitGuess}
             disabled={gameState?.gameStatus !== "active" || isPending || !bookTitle.trim()}
           >
