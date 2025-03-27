@@ -63,7 +63,7 @@ export function calculateWinPercentage(gamesPlayed: number, gamesWon: number): s
 // Generate share text for results
 export function generateShareText(gameNumber: number, attempts: number, won: boolean): string {
   if (!won) {
-    return `Bookle #${gameNumber}: I couldn't guess today's book in 8 attempts!`;
+    return `Bookaneer #${gameNumber}: I couldn't guess today's book in 8 attempts!`;
   }
-  return `Bookle #${gameNumber}: I guessed today's book in ${attempts}/8 attempts!`;
+  return `Bookaneer #${gameNumber}: I guessed today's book in ${attempts}/8 attempts!`;
 }

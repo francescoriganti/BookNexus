@@ -1,26 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-// Per i moduli ES dobbiamo definire __dirname manualmente
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Set base URL for local development
-process.env.BASE_URL = process.env.BASE_URL || '';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Serve la cartella book-covers direttamente
-app.use('/book-covers', express.static(path.join(__dirname, '..', 'public', 'book-covers')));
-
-// Serve la cartella images direttamente
-app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
 
 app.use((req, res, next) => {
   const start = Date.now();

@@ -51,7 +51,7 @@ export default function PreviousGuesses({ guesses }: PreviousGuessesProps) {
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                     <img 
-                      src={guess.imageUrl?.startsWith("http") ? guess.imageUrl : `${window.location.origin}${guess.imageUrl}`} 
+                      src={guess.imageUrl} 
                       alt={`Cover of ${guess.title}`} 
                       className="w-full h-full object-cover"
                     />
