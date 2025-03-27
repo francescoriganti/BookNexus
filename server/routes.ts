@@ -355,11 +355,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submit a guess (versione client-side state)
   app.post("/api/game/guess", async (req: Request, res: Response) => {
     const guessSchema = z.object({
-      bookTitle: z.string().min(1)
+      bookTitle: z.string().min(1),
+      remainingAttempts: z.number().optional() // Optional parameter to check if attempts are exhausted
     });
     
     try {
-      const { bookTitle } = guessSchema.parse(req.body);
+      const { bookTitle, remainingAttempts } = guessSchema.parse(req.body);
       const today = getTodayDateString();
       
       // Non gestire più lo stato sul server, solo verifica il tentativo
@@ -369,16 +370,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: guessResult.error });
       }
       
-      // Se il tentativo è corretto, includiamo il libro per la vittoria
-      if (guessResult.isCorrect) {
-        // Ottieni il game state per trovare il daily book
-        let gameState = await activeStorage.getGameState(today);
-        if (!gameState) {
-          gameState = await activeStorage.createGameState(today);
-        }
-        
+      // Ottieni il game state per trovare il daily book
+      let gameState = await activeStorage.getGameState(today);
+      if (!gameState) {
+        gameState = await activeStorage.createGameState(today);
+      }
+      
+      // Se il tentativo è corretto O gli tentativi sono esauriti, includiamo il libro
+      if (guessResult.isCorrect || (remainingAttempts !== undefined && remainingAttempts <= 1)) {
         const dailyBook = await activeStorage.getBook(gameState.dailyBookId);
-        return res.json({ guessResult, dailyBook });
+        return res.json({ 
+          guessResult, 
+          dailyBook,
+          gameOver: true,
+          won: guessResult.isCorrect
+        });
       }
       
       // Semplice risposta con solo il risultato del tentativo

@@ -159,7 +159,12 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
     isPending
   } = useMutation({
     mutationFn: async (bookTitle: string) => {
-      const response = await apiRequest('POST', '/api/game/guess', { bookTitle });
+      // Include i tentativi rimanenti per permettere al server di riconoscere l'ultimo tentativo
+      const remainingAttempts = localGameState?.remainingAttempts || 0;
+      const response = await apiRequest('POST', '/api/game/guess', { 
+        bookTitle,
+        remainingAttempts 
+      });
       return response.json();
     },
     onSuccess: (data) => {
@@ -172,8 +177,8 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
         return;
       }
       
-      // Il server ora restituisce solo il risultato del tentativo, non l'intero stato
-      const { guessResult, dailyBook: correctBook } = data;
+      // Il server ora restituisce il risultato del tentativo e possibilmente il libro
+      const { guessResult, dailyBook: correctBook, gameOver, won } = data;
       
       if (!localGameState) return;
       
@@ -234,14 +239,14 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
       setLocalGameState(updatedState);
       
       // Se il tentativo è errato e il gioco non è ancora finito, mostra l'animazione shake
-      if (!correctBook && updatedState.gameStatus === "active") {
+      if (!gameOver && updatedState.gameStatus === "active") {
         setTimeout(() => {
           const event = new CustomEvent('incorrectGuess');
           window.dispatchEvent(event);
         }, 300);
       }
       
-      // Se abbiamo indovinato, salva il libro e mostra il modale
+      // Se il server ha inviato il libro (per vittoria o sconfitta), gestisci l'ultimo tentativo
       if (correctBook) {
         setDailyBook(correctBook);
         
@@ -259,7 +264,7 @@ export const useGameProvider: FC<{ children: ReactNode }> = ({ children }) => {
           localStorage.setItem(`resultModalShown_${todayDateString}`, 'true');
           setHasShownResultModal(true);
           
-          // Show the result modal immediately
+          // Show the result modal immediately - verrà mostrato per entrambi i casi (vittoria o sconfitta)
           openGameResultModal();
         }
       }

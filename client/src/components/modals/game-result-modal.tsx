@@ -62,10 +62,11 @@ export default function GameResultModal({
       setOpen(true);
       
       // Se ha vinto, mostra i confetti, ma solo se è la prima volta (non un refresh)
+      // Importante: mostriamo i confetti SOLO in caso di vittoria, non in caso di sconfitta
       if (gameStatus === "won" && !confettiShown && !hasHandledInitialState) {
         setConfettiShown(true);
         
-        // Funzione per lanciare i confetti
+        // Funzione per lanciare i confetti (solo per vittoria)
         setTimeout(() => {
           // Iniettiamo CSS per assicurarci che il canvas di confetti sia sempre sopra tutto
           const style = document.createElement('style');
