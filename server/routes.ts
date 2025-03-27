@@ -151,7 +151,9 @@ function generateBookCoverUrl(bookTitle: string): string {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
   
-  return `/book-covers/${sanitizedTitle}.svg`;
+  // Usa URL completo del server attuale
+  const baseUrl = process.env.BASE_URL || '';
+  return `${baseUrl}/book-covers/${sanitizedTitle}.svg`;
 }
 
 // Helper for checking guess correctness and providing feedback

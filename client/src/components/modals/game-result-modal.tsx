@@ -215,7 +215,7 @@ export default function GameResultModal({
                   transition={{ delay: 0.3, duration: 0.5 }}
                 >
                   <motion.img 
-                    src={dailyBook.imageUrl} 
+                    src={dailyBook.imageUrl?.startsWith("http") ? dailyBook.imageUrl : `${window.location.origin}${dailyBook.imageUrl}`} 
                     alt={`Cover of ${dailyBook.title}`} 
                     className="w-full h-full object-cover"
                     initial={{ scale: 1.2 }}
@@ -280,7 +280,7 @@ export default function GameResultModal({
                           transition={{ delay: 0.3, duration: 0.5 }}
                         >
                           <motion.img 
-                            src={savedDailyBook.imageUrl} 
+                            src={savedDailyBook.imageUrl?.startsWith("http") ? savedDailyBook.imageUrl : `${window.location.origin}${savedDailyBook.imageUrl}`} 
                             alt={`Cover of ${savedDailyBook.title}`} 
                             className="w-full h-full object-cover"
                             initial={{ scale: 1.2 }}
