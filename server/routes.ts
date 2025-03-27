@@ -143,10 +143,30 @@ function getTodayDateString(): string {
   return today.toISOString().split('T')[0]; // YYYY-MM-DD format
 }
 
+// Helper to generate book cover URL
+function generateBookCoverUrl(bookTitle: string): string {
+  const sanitizedTitle = bookTitle
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  
+  return `/book-covers/${sanitizedTitle}.svg`;
+}
+
 // Helper for checking guess correctness and providing feedback
 async function checkGuess(bookTitle: string, date: string) {
   const dailyBook = await activeStorage.getDailyBook(date);
   const guessedBook = await activeStorage.getBookByTitle(bookTitle);
+  
+  // Add cover URL to books if they don't have one
+  if (dailyBook && !dailyBook.imageUrl) {
+    dailyBook.imageUrl = generateBookCoverUrl(dailyBook.title);
+  }
+  
+  if (guessedBook && !guessedBook.imageUrl) {
+    guessedBook.imageUrl = generateBookCoverUrl(guessedBook.title);
+  }
   
   if (!guessedBook) {
     return { error: "Book not found in database" };
@@ -307,6 +327,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: "Daily book not found", success: false });
       }
       
+      // Add cover URL if it doesn't exist
+      if (!dailyBook.imageUrl) {
+        dailyBook.imageUrl = generateBookCoverUrl(dailyBook.title);
+      }
+      
       // Return initial state info (date, book attributes) but don't include the title or author
       // to prevent cheating
       const initialState = {
@@ -379,6 +404,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se il tentativo è corretto O gli tentativi sono esauriti, includiamo il libro
       if (guessResult.isCorrect || (remainingAttempts !== undefined && remainingAttempts <= 1)) {
         const dailyBook = await activeStorage.getBook(gameState.dailyBookId);
+        
+        // Add cover URL if it doesn't exist
+        if (dailyBook && !dailyBook.imageUrl) {
+          dailyBook.imageUrl = generateBookCoverUrl(dailyBook.title);
+        }
+        
         return res.json({ 
           guessResult, 
           dailyBook,
