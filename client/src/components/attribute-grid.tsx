@@ -35,7 +35,8 @@ export default function AttributeGrid({ attributes }: AttributeGridProps) {
   // Ottieni lo stato corrente del gioco dal localStorage, se disponibile
   const getAllGuesses = () => {
     try {
-      const gameStateRaw = localStorage.getItem('gameState');
+      const todayDateString = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      const gameStateRaw = localStorage.getItem(`gameState_${todayDateString}`);
       if (gameStateRaw) {
         const gameState = JSON.parse(gameStateRaw);
         if (gameState.guesses && gameState.guesses.length > 0) {

@@ -143,10 +143,32 @@ function getTodayDateString(): string {
   return today.toISOString().split('T')[0]; // YYYY-MM-DD format
 }
 
+// Helper to generate book cover URL
+function generateBookCoverUrl(bookTitle: string): string {
+  const sanitizedTitle = bookTitle
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  
+  // Usa URL completo del server attuale
+  const baseUrl = process.env.BASE_URL || '';
+  return `${baseUrl}/book-covers/${sanitizedTitle}.svg`;
+}
+
 // Helper for checking guess correctness and providing feedback
 async function checkGuess(bookTitle: string, date: string) {
   const dailyBook = await activeStorage.getDailyBook(date);
   const guessedBook = await activeStorage.getBookByTitle(bookTitle);
+  
+  // Add cover URL to books if they don't have one
+  if (dailyBook && !dailyBook.imageUrl) {
+    dailyBook.imageUrl = generateBookCoverUrl(dailyBook.title);
+  }
+  
+  if (guessedBook && !guessedBook.imageUrl) {
+    guessedBook.imageUrl = generateBookCoverUrl(guessedBook.title);
+  }
   
   if (!guessedBook) {
     return { error: "Book not found in database" };
@@ -248,8 +270,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get today's game state
-  app.get("/api/game", async (req: Request, res: Response) => {
+  // Get only today's daily book ID and initial state, don't store progress server-side
+  app.get("/api/daily-book", async (req: Request, res: Response) => {
     try {
       const today = getTodayDateString();
       const resetGame = req.query.reset === 'true';
@@ -292,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Normal game state retrieval
+      // Get today's game state to extract the dailyBookId
       let gameState = await activeStorage.getGameState(today);
       
       if (!gameState) {
@@ -300,121 +322,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gameState = await activeStorage.createGameState(today);
       }
       
-      // Don't send the book ID in the response to avoid cheating
-      const { dailyBookId, ...safeGameState } = gameState;
+      // Get the daily book's attributes 
+      const dailyBook = await activeStorage.getBook(gameState.dailyBookId);
       
-      res.json(safeGameState);
+      if (!dailyBook) {
+        return res.status(500).json({ error: "Daily book not found", success: false });
+      }
+      
+      // Add cover URL if it doesn't exist
+      if (!dailyBook.imageUrl) {
+        dailyBook.imageUrl = generateBookCoverUrl(dailyBook.title);
+      }
+      
+      // Return initial state info (date, book attributes) but don't include the title or author
+      // to prevent cheating
+      const initialState = {
+        id: `game-${today}`,
+        date: today,
+        bookAttributes: [
+          { name: "Publication Year", value: dailyBook.publicationYear, icon: "calendar_today", revealed: false, type: "date" },
+          { name: "Genre", value: dailyBook.genre, icon: "category", revealed: false, type: "text" },
+          { name: "Author's Country", value: dailyBook.authorsCountry, icon: "public", revealed: false, type: "text" },
+          { name: "Pages", value: dailyBook.pages, icon: "menu_book", revealed: false, type: "number" },
+          { name: "Author", value: dailyBook.author, icon: "person", revealed: false, type: "text" },
+          { name: "Original Language", value: dailyBook.originalLanguage, icon: "translate", revealed: false, type: "text" },
+          { name: "Historical Period", value: dailyBook.historicalPeriod, icon: "history_edu", revealed: false, type: "text" }
+        ]
+      };
+      
+      res.json(initialState);
+    } catch (error) {
+      console.error("Error in /api/daily-book:", error);
+      res.status(500).json({ error: "An error occurred", success: false });
+    }
+  });
+  
+  // Maintain backward compatibility temporarily
+  app.get("/api/game", async (req: Request, res: Response) => {
+    try {
+      const today = getTodayDateString();
+      
+      // Crea uno stato del gioco iniziale ed emettilo
+      const initialState = {
+        id: `game-${today}`,
+        date: today,
+        remainingAttempts: 8,
+        guesses: [],
+        gameStatus: "active",
+        revealedAttributes: []
+      };
+      
+      res.json(initialState);
     } catch (error) {
       console.error("Error in /api/game:", error);
       res.status(500).json({ error: "An error occurred", success: false });
     }
   });
   
-  // Submit a guess
+  // Submit a guess (versione client-side state)
   app.post("/api/game/guess", async (req: Request, res: Response) => {
     const guessSchema = z.object({
-      bookTitle: z.string().min(1)
+      bookTitle: z.string().min(1),
+      remainingAttempts: z.number().optional() // Optional parameter to check if attempts are exhausted
     });
     
     try {
-      const { bookTitle } = guessSchema.parse(req.body);
+      const { bookTitle, remainingAttempts } = guessSchema.parse(req.body);
       const today = getTodayDateString();
       
-      // Get or create game state
-      let gameState = await activeStorage.getGameState(today);
-      if (!gameState) {
-        gameState = await activeStorage.createGameState(today);
-      }
-      
-      // Check if game is already over
-      if (gameState.gameStatus !== "active") {
-        return res.status(400).json({ error: "Game is already over" });
-      }
-      
-      // Check if book exists and compare with today's book
+      // Non gestire più lo stato sul server, solo verifica il tentativo
       const guessResult = await checkGuess(bookTitle, today);
       
       if ('error' in guessResult) {
         return res.status(404).json({ error: guessResult.error });
       }
       
-      // Update game state
-      gameState.remainingAttempts--;
-      gameState.guesses.push(guessResult);
-      
-      // NUOVA LOGICA: Rivela gli attributi che corrispondono
-      console.log("Stato attributi prima dell'aggiornamento:", gameState.revealedAttributes);
-      
-      // Otteniamo l'ultimo tentativo per vedere quali attributi corrispondono
-      const latestGuess = guessResult;
-      
-      // Rivela gli attributi in base alla corrispondenza
-      if (gameState.revealedAttributes && latestGuess) {
-        gameState.revealedAttributes.forEach((attr: any, index: number) => {
-          // Mappa il nome dell'attributo al campo corrispondente in guessResult
-          let matchStatus: "correct" | "partial" | "incorrect" | null = null;
-          
-          if (attr.name === "Publication Year") {
-            matchStatus = latestGuess.attributes.publicationYear.status;
-          } else if (attr.name === "Genre") {
-            matchStatus = latestGuess.attributes.genre.status;
-          } else if (attr.name === "Author's Country") {
-            matchStatus = latestGuess.attributes.authorsCountry.status;
-          } else if (attr.name === "Pages") {
-            matchStatus = latestGuess.attributes.pages.status;
-          } else if (attr.name === "Author") {
-            matchStatus = latestGuess.attributes.author.status;
-          } else if (attr.name === "Original Language") {
-            matchStatus = latestGuess.attributes.originalLanguage.status;
-          } else if (attr.name === "Historical Period") {
-            matchStatus = latestGuess.attributes.historicalPeriod.status;
-          }
-          
-          // Se l'attributo è corretto o parzialmente corretto, rivelalo
-          if (matchStatus === "correct") {
-            gameState.revealedAttributes[index].revealed = true;
-            console.log(`Rivelato attributo ${attr.name} perché corrisponde esattamente`);
-          }
-        });
+      // Ottieni il game state per trovare il daily book
+      let gameState = await activeStorage.getGameState(today);
+      if (!gameState) {
+        gameState = await activeStorage.createGameState(today);
       }
       
-      console.log("Stato attributi dopo l'aggiornamento:", gameState.revealedAttributes);
-      
-      // Check if game is over
-      if (guessResult.isCorrect) {
-        gameState.gameStatus = "won";
-      } else if (gameState.remainingAttempts <= 0) {
-        gameState.gameStatus = "lost";
-      }
-      
-      // Save updated game state
-      await activeStorage.updateGameState(gameState);
-      
-      // If game is over, include the correct book
-      if (gameState.gameStatus !== "active") {
+      // Se il tentativo è corretto O gli tentativi sono esauriti, includiamo il libro
+      if (guessResult.isCorrect || (remainingAttempts !== undefined && remainingAttempts <= 1)) {
         const dailyBook = await activeStorage.getBook(gameState.dailyBookId);
+        
+        // Add cover URL if it doesn't exist
+        if (dailyBook && !dailyBook.imageUrl) {
+          dailyBook.imageUrl = generateBookCoverUrl(dailyBook.title);
+        }
+        
         return res.json({ 
           guessResult, 
-          gameState: { 
-            ...gameState, 
-            dailyBookId: undefined 
-          }, 
-          dailyBook 
+          dailyBook,
+          gameOver: true,
+          won: guessResult.isCorrect
         });
       }
       
-      // Facciamo una copia profonda per garantire che non ci siano riferimenti condivisi
-      const { dailyBookId, ...safeGameState } = JSON.parse(JSON.stringify(gameState));
-      
-      console.log('Inviando risposta al client:', {
-        guessResult: JSON.stringify(guessResult),
-        gameState: JSON.stringify(safeGameState)
-      });
-      
-      // Forza un ritardo minimo per garantire che il frontend abbia tempo di aggiornare lo stato
-      setTimeout(() => {
-        res.json({ guessResult, gameState: safeGameState });
-      }, 100);
+      // Semplice risposta con solo il risultato del tentativo
+      res.json({ guessResult });
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }
@@ -422,6 +429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get stats
   app.get("/api/stats", async (req: Request, res: Response) => {
+    
     // For simplicity, we'll use a fixed user ID
     const userId = 1;
     
@@ -455,6 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const { won, attempts } = statsSchema.parse(req.body);
+      
       const userId = 1; // Using fixed user ID for simplicity
       
       // Get or create stats

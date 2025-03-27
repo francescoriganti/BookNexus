@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import CountdownTimer from "@/components/countdown-timer";
 import BookSearch from "@/components/book-search";
 import AttributeGrid from "@/components/attribute-grid";
 import PreviousGuesses from "@/components/previous-guesses";
@@ -21,9 +20,28 @@ export default function GameBoard() {
     stats,
     gameNumber,
     hasUpdatedStats,
+    hasShownResultModal,
     updateStats
   } = useGame();
   const [bookTitle, setBookTitle] = useState("");
+  
+  // Non mostrare il modale di vittoria se il gioco è stato caricato da localStorage
+  useEffect(() => {
+    const todayDateString = new Date().toISOString().split('T')[0];
+    const resultModalShownBefore = localStorage.getItem(`resultModalShown_${todayDateString}`);
+    
+    // Forza la chiusura di qualsiasi modale aperto al refresh se è già stato mostrato
+    if (resultModalShownBefore === 'true') {
+      setTimeout(() => {
+        const closeButtons = document.querySelectorAll("[data-state='open'] button[type='button']");
+        closeButtons.forEach((button: any) => {
+          if (button.textContent === 'Close') {
+            button.click();
+          }
+        });
+      }, 100);
+    }
+  }, []);
   
   // Handle guess submission
   const handleSubmitGuess = () => {
@@ -68,13 +86,7 @@ export default function GameBoard() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
-      {/* Timer */}
-      <div className="mb-6 text-center">
-        <p className="text-sm text-slate-500 mb-1">Next book in</p>
-        <CountdownTimer />
-      </div>
-
+    <main className="max-w-2xl mx-auto px-4 py-6">
       {/* Game Board */}
       <Card className="mb-8 game-container">
         <CardContent className="p-6">
@@ -97,7 +109,7 @@ export default function GameBoard() {
 
           {/* Submit Button */}
           <Button
-            className={`w-full mb-6 ${(gameState?.gameStatus !== "active" || isPending || !bookTitle.trim()) ? "bg-[#11a856] hover:bg-[#11a856] opacity-100" : ""}`} 
+            className="w-full mb-6 disabled:opacity-100 disabled:bg-[#11a856] disabled:text-white" 
             onClick={handleSubmitGuess}
             disabled={gameState?.gameStatus !== "active" || isPending || !bookTitle.trim()}
           >
